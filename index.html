@@ -129,7 +129,7 @@
 
                 <div id="engine-status" class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--panel-border)] bg-[var(--input-bg)]"><span class="w-2 h-2 rounded-full bg-gray-500 transition-colors" id="engine-dot"></span><span id="engine-name" class="text-xs font-mono text-sub">No Key</span></div>
                 
-                <button onclick="handleRefresh()" class="p-2 rounded-xl hover:bg-[var(--panel-border)] transition text-lg opacity-70 hover:opacity-100 hidden sm:block" title="刷新 (Ctrl+Z)：清空内容，保留Key">🔄</button>
+               <button onclick="toggleRefreshModal()" class="p-2 rounded-xl hover:bg-[var(--panel-border)] transition text-lg opacity-70 hover:opacity-100 hidden sm:block" title="刷新 (Ctrl+Z)：清空内容，保留Key">🔄</button>
 
 <button onclick="toggleResetModal()" class="p-2 rounded-xl hover:bg-[var(--panel-border)] transition text-lg opacity-70 hover:opacity-100 hidden sm:block text-red-400" title="重置：初始化所有设置">⚠️</button>
 
@@ -393,15 +393,22 @@
         </div>
     </div>
     
-    <div id="refresh-modal" class="fixed inset-0 z-[130] hidden">
+   <div id="refresh-modal" class="fixed inset-0 z-[130] hidden">
     <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="toggleRefreshModal()"></div>
-    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-sm shadow-2xl border border-indigo-500/30 p-6 flex flex-col items-center text-center">
-        <div class="text-4xl mb-4">🔄</div>
+    
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-sm shadow-2xl border border-amber-500/30 p-6 flex flex-col items-center text-center">
+        <div class="text-4xl mb-4 text-amber-400 filter drop-shadow-[0_0_10px_rgba(251,191,36,0.3)]">🔄</div>
+        
         <h3 class="text-lg font-bold text-main mb-2">刷新创作区？</h3>
-        <p class="text-sm text-sub mb-6 leading-relaxed">这将清空梗概、角色和大纲。<br><span class="text-emerald-400 font-bold">✨ API Key 和设置会被保留</span></p>
+        
+        <p class="text-sm text-sub mb-6 leading-relaxed">
+            这将清空当前梗概、设定和正文。<br>
+            <span class="text-amber-400 font-bold">✨ API Key 和设置将被保留</span>
+        </p>
+        
         <div class="flex gap-3 w-full">
-            <button onclick="toggleRefreshModal()" class="flex-1 btn-ghost py-2.5 rounded-xl text-sm">取消</button>
-            <button onclick="performRefresh()" class="flex-1 btn-gradient py-2.5 rounded-xl font-bold text-sm shadow-lg text-white">确认刷新</button>
+            <button onclick="toggleRefreshModal()" class="flex-1 btn-ghost py-2.5 rounded-xl text-sm hover:bg-white/5 transition-colors">取消</button>
+            <button onclick="performRefresh()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white py-2.5 rounded-xl font-bold text-sm shadow-lg shadow-amber-500/20 transition-all hover:-translate-y-0.5">确认刷新</button>
         </div>
     </div>
 </div>
