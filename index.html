@@ -304,8 +304,7 @@
                 </div>
                 <div class="flex-grow relative rounded-b-2xl overflow-hidden bg-[var(--panel-bg)]">
                     <div id="loading-overlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 hidden flex flex-col items-center justify-center"><div class="animate-spin text-5xl mb-6 text-accent filter drop-shadow-[0_0_15px_var(--accent-glow)]">🛸</div><p class="text-xl font-bold serif-font text-main animate-pulse">引擎轰鸣中...</p></div>
-                    <textarea id="chapter-editor" class="w-full h-full bg-transparent p-4 md:p-20 resize-none leading-loose text-base md:text-lg serif-font focus:outline-none placeholder-opacity-30 text-main" placeholder="在此处写作...&#10;选中文本可触发 AI 润色/扩写工具。" oninput="updateWordCount(); petHappy(); debounceSave()"></textarea>
-                </div>
+                     <textarea id="chapter-editor" class="w-full h-full bg-transparent p-4 md:p-20 resize-none leading-loose text-base md:text-lg serif-font focus:outline-none placeholder-opacity-30 text-main" placeholder="在此处写作...&#10;选中文本可触发 AI 润色/扩写工具。" oninput="updateWordCount(); debounceSaveContent()"></textarea>                </div>
             </div>
         </section>
     </main>
@@ -513,7 +512,8 @@
 
         // --- 核心状态 ---
         let store = { defaultWordCount: '2000-3000', apiKey: '', concept: '', lore: '', targetChapters: 100, characters: [], outline: [], currentChapterId: null, chapterTexts: {}, theme: 'crystal', tags: [], engine: 'none', baseUrl: 'https://api.deepseek.com/chat/completions' };
-        let saveTimeout;
+        let saveTimeoutMeta;
+        let saveTimeoutContent;
         const NOVEL_TAGS = { "🏆 男频精选": ["玄幻", "都市", "仙侠", "科幻", "悬疑", "奇幻", "历史", "游戏", "体育", "军事", "武侠", "轻小说"], "🌸 女频精选": ["现言", "古言", "幻言", "校园", "青春", "纯爱", "宫斗", "重生", "种田", "豪门", "女强", "快穿"], "⚡ 核心元素": ["系统", "神医", "脑洞", "鉴宝", "恐怖", "推理", "谍战", "末世", "无限流", "赛博朋克", "克苏鲁", "灵气复苏", "诸天万界"], "🎭 主角人设": ["腹黑", "高冷", "病娇", "赘婿", "战神", "神豪", "学霸", "奶爸", "杀伐果断", "智商在线", "反派", "老六"], "🎨 风格基调": ["爽文", "搞笑", "轻松", "热血", "暗黑", "治愈", "甜宠", "虐文", "无敌", "迪化", "群像", "幕后流"] };
         const systemAnnouncements = [{ id: 999, title: "🔑 新手必读：免费获取 DeepSeek API Key", date: "置顶", type: "important", content: `<div class="space-y-2"><p>DeepSeek 注册即送免费额度，无需绑卡！</p><ol class="list-decimal pl-4 space-y-1 opacity-80"><li>访问 <a href="https://platform.deepseek.com/" target="_blank" class="underline font-bold text-accent">DeepSeek 开放平台</a>。</li><li>点击左侧 <b>API Keys</b> 菜单 -> <b>Create API Key</b>。</li><li>复制 <code class="bg-black/20 px-1 rounded border border-white/10">sk-</code> 开头的密钥，粘贴到本网页右上角。</li></ol></div>` }, { id: 400, title: "v4.0 Pro 更新日志", date: "2025-07-06", type: "update", content: "• <b>无限存储</b>: 升级 IndexedDB，彻底解决存储上限问题。<br>• <b>AI 智商提升</b>: 全面优化世界观、角色生成逻辑。<br>• <b>性能优化</b>: 增加智能休眠，减少发热。" }];
 
@@ -724,37 +724,109 @@ document.addEventListener('keydown', function(e) {
         function importData(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if(data.characters && data.outline) { store = {...store, ...data}; saveData(); location.reload(); } else { showToast("文件格式不正确", "error"); } } catch(err) { showToast("导入失败: " + err.message, "error"); } }; reader.readAsText(file); }
         function handleSelection(e) { const editor = document.getElementById('chapter-editor'); const toolbar = document.getElementById('ai-toolbar'); const start = editor.selectionStart; const end = editor.selectionEnd; if (start !== end) { currentSelectionRange = { start, end, text: editor.value.substring(start, end) }; const isMobile = window.innerWidth < 640; if(!isMobile) { if(e.type === 'mouseup' || e.type === 'keyup') { toolbar.style.left = `${Math.min(e.clientX - 50, window.innerWidth - 250)}px`; toolbar.style.top = `${Math.max(e.clientY - 60, 20)}px`; } } toolbar.classList.add('visible'); } else { toolbar.classList.remove('visible'); } }
         
-        async function saveData() { 
-            if (!store) return;
-            store.apiKey = document.getElementById('api-key').value; 
-            store.concept = document.getElementById('novel-prompt').value; 
-            store.lore = document.getElementById('novel-lore').value; 
-            store.targetChapters = document.getElementById('target-total-chapters').value; 
-            try {
-                await idb.put('deepseek_novel_data_v2', store);
-                const s = document.getElementById('save-status'); 
-                if(s){ const json = JSON.stringify(store); const size = (new Blob([json]).size / 1024).toFixed(1); s.innerText = `● Saved DB (${size}KB) ` + new Date().toLocaleTimeString(); s.style.color = "#10b981"; }
-            } catch(e) { console.error(e); const s = document.getElementById('save-status'); if(s) { s.innerText = "⚠️ Save Error"; s.style.color = "#ef4444"; } }
+        // --- [修改 1] 替换原有的 saveData 函数 ---
+async function saveData(type = 'meta', relatedId = null) {
+    if (!store) return;
+    
+    // 1. 同步界面数据到内存 store (除正文外，正文已实时同步)
+    store.apiKey = document.getElementById('api-key').value;
+    store.concept = document.getElementById('novel-prompt').value;
+    store.lore = document.getElementById('novel-lore').value;
+    store.targetChapters = document.getElementById('target-total-chapters').value;
+    
+    const s = document.getElementById('save-status');
+    if(s && type === 'meta') { s.innerText = "Saving Meta..."; s.style.color = "#fbbf24"; }
+
+    try {
+        if (type === 'chapter' && relatedId) {
+            // 【高效模式】只存单章正文，速度极快
+            const content = store.chapterTexts[relatedId] || "";
+            await idb.put(`chapter_${relatedId}`, content);
+            if(s) { s.innerText = `● Saved Ch.${relatedId}`; s.style.color = "#10b981"; }
+        } 
+        else {
+            // 【元数据模式】剥离正文，只存设定/大纲/角色
+            const { chapterTexts, ...metaData } = store; 
+            await idb.put('novel_meta', metaData);
+            
+            if(s) { 
+                const size = (new Blob([JSON.stringify(metaData)]).size / 1024).toFixed(1);
+                s.innerText = `● Saved Meta (${size}KB)`; 
+                s.style.color = "#10b981"; 
+            }
         }
+    } catch(e) { 
+        console.error(e); 
+        if(s) { s.innerText = "⚠️ Save Error"; s.style.color = "#ef4444"; } 
+    }
+}
+        // --- [修改 2] 替换原有的 loadData 函数 ---
+async function loadData() { 
+    try {
+        // 1. 尝试读取新版元数据
+        let meta = await idb.get('novel_meta');
         
-        async function loadData() { 
-            try {
-                let data = await idb.get('deepseek_novel_data_v2');
-                if (!data) {
-                    const localRaw = localStorage.getItem('deepseek_novel_data_v2') || localStorage.getItem('deepseek_novel_data_v1');
-                    if (localRaw) { data = JSON.parse(localRaw); console.log("Migrating LS to IDB..."); await idb.put('deepseek_novel_data_v2', data); }
+        // 2. [自动迁移] 如果没有新版数据，检查旧版大整合包
+        if (!meta) {
+            const oldData = await idb.get('deepseek_novel_data_v2') || 
+                            JSON.parse(localStorage.getItem('deepseek_novel_data_v2') || 'null');
+            if (oldData) {
+                console.log("检测到旧版数据，正在迁移...");
+                const { chapterTexts, ...rest } = oldData;
+                meta = rest;
+                // 保存拆分后的元数据
+                await idb.put('novel_meta', meta);
+                // 保存拆分后的章节
+                if (chapterTexts) {
+                    for (const [id, text] of Object.entries(chapterTexts)) {
+                        await idb.put(`chapter_${id}`, text);
+                    }
                 }
-                if(data){ 
-                    store = {...store, ...data}; 
-                    if(!store.tags) store.tags=[]; if(!store.baseUrl) store.baseUrl='https://api.deepseek.com/chat/completions'; 
-                    document.getElementById('api-key').value = store.apiKey||''; document.getElementById('novel-prompt').value = store.concept||''; document.getElementById('novel-lore').value = store.lore||''; document.getElementById('target-total-chapters').value = store.targetChapters||100; 
-                    if(store.characters.length) renderCharacters(); 
-                    if(store.outline.length){ renderOutline(); document.getElementById('section-outline').classList.remove('hidden'); if(store.currentChapterId){ activateLoom(); document.getElementById('chapter-selector').value = store.currentChapterId; loadChapterText(); } } 
-                    renderSelectedTags(); detectEngine(); 
-                    showToast("数据加载成功 (DB)", "success");
-                }
-            } catch(e) { console.error(e); showToast("Load Error: " + e.message, "error"); }
+                showToast("升级成功：数据已迁移至高性能存储", "success");
+            }
         }
+
+        if(meta){ 
+            store = {...store, ...meta}; 
+            store.chapterTexts = {}; // 内存中初始化正文容器
+
+            // 3. [并行读取] 只有大纲里有的章节，才去数据库读正文
+            if (store.outline && store.outline.length > 0) {
+                await Promise.all(store.outline.map(async (ch) => {
+                    const text = await idb.get(`chapter_${ch.id}`);
+                    if (text) store.chapterTexts[ch.id] = text;
+                }));
+            }
+
+            // 4. 恢复界面状态 (保持原样)
+            if(!store.tags) store.tags=[]; 
+            if(!store.baseUrl) store.baseUrl='https://api.deepseek.com/chat/completions'; 
+            document.getElementById('api-key').value = store.apiKey||''; 
+            document.getElementById('novel-prompt').value = store.concept||''; 
+            document.getElementById('novel-lore').value = store.lore||''; 
+            document.getElementById('target-total-chapters').value = store.targetChapters||100; 
+            
+            if(store.characters.length) renderCharacters(); 
+            if(store.outline.length){ 
+                renderOutline(); 
+                document.getElementById('section-outline').classList.remove('hidden'); 
+                if(store.currentChapterId){ 
+                    activateLoom(); 
+                    document.getElementById('chapter-selector').value = store.currentChapterId; 
+                    // 确保编辑器显示内容
+                    document.getElementById('chapter-editor').value = store.chapterTexts[store.currentChapterId] || "";
+                    updateWordCount();
+                } 
+            } 
+            renderSelectedTags(); 
+            detectEngine(); 
+            console.log("数据加载完成 (Split Mode)");
+        }
+    } catch(e) { 
+        console.error(e); 
+        showToast("加载失败: " + e.message, "error"); 
+    }
+}
 
         // --- AI Logic (Updated) ---
         async function callAI(msgs, onChunk) {
@@ -867,7 +939,36 @@ document.addEventListener('keydown', function(e) {
         function toggleTagSelector() { document.getElementById('tag-selector-modal').classList.toggle('hidden'); if(!document.getElementById('tag-selector-modal').classList.contains('hidden')) renderTagSelector(); }
         function addCustomTag() { const i=document.getElementById('custom-tag-input'); const v=i.value.trim(); if(v&&!store.tags.includes(v)){ store.tags.push(v); i.value=''; renderTagSelector(); renderSelectedTags(); saveData(); } }
         function updateClock() { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }
-        function debounceSave() { const s=document.getElementById('save-status'); if(s) { s.innerText="Saving..."; clearTimeout(saveTimeout); saveTimeout=setTimeout(saveData, 1000); } petHappy(); }
+        // 1. 普通防抖：用于设定、大纲等修改 (保存为 Meta)
+function debounceSave() { 
+    // 只有在非写作状态下才提示 Saving...
+    const s = document.getElementById('save-status');
+    // 如果正在写正文(saveTimeoutContent存在)，就不抢占状态栏显示
+    if(s && !saveTimeoutContent) s.innerText = "Waiting..."; 
+    
+    clearTimeout(saveTimeoutMeta); 
+    saveTimeoutMeta = setTimeout(() => saveData('meta'), 1000); 
+}
+
+// 2. 写作防抖：专门用于高频打字 (保存为 Chapter)
+function debounceSaveContent() {
+    const editor = document.getElementById('chapter-editor');
+    const currentId = store.currentChapterId;
+    
+    // 实时更新内存，防止切换章节丢失
+    if (currentId) {
+        store.chapterTexts[currentId] = editor.value;
+    }
+
+    const s = document.getElementById('save-status'); 
+    if(s) { s.innerText = "Writing..."; s.style.color = "#818cf8"; }
+    
+    clearTimeout(saveTimeoutContent); 
+    // 1秒无操作后，只保存当前这一章
+    saveTimeoutContent = setTimeout(() => saveData('chapter', currentId), 1000); 
+    
+    petHappy(); // 保持原来的宠物互动
+}
         function toggleThemeMenu() { document.getElementById('theme-menu').classList.toggle('hidden'); }
         function changeTheme(n) { document.documentElement.setAttribute('data-theme', n); store.theme=n; saveData(); document.getElementById('theme-menu').classList.add('hidden'); }
         function switchTab(id) { ['tab-prompt','tab-lore','tab-graph'].forEach(t=>document.getElementById(t).classList.add('hidden')); ['btn-tab-prompt','btn-tab-lore','btn-tab-graph'].forEach(b=>document.getElementById(b).className="flex-1 px-2 md:px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-300 opacity-60 hover:opacity-100 hover:bg-[var(--panel-bg)] whitespace-nowrap"); document.getElementById(id).classList.remove('hidden'); document.getElementById('btn-'+id).className="flex-1 px-2 md:px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-300 shadow-md bg-[var(--panel-bg)] text-accent whitespace-nowrap"; if(id==='tab-graph') initGraph(); }
