@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="nebula">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="description" content="Nebula Quill: A local-first AI writing IDE.">
+    <title>星云笔尖 v4.0 (Pro)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%236366f1;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23a855f7;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Ccircle cx='50' cy='50' r='48' fill='%231e293b' stroke='url(%23grad)' stroke-width='3'/%3E%3Cpath d='M50 20 L72 55 Q80 70 50 85 Q20 70 28 55 Z' fill='url(%23grad)'/%3E%3C/svg%3E">
+
+    <style>
+        /* --- 核心主题系统 (保持不变) --- */
+        :root { --bg-color: #0b0e14; --text-main: #e2e8f0; --text-sub: #94a3b8; --panel-bg: rgba(30, 41, 59, 0.4); --panel-border: rgba(255, 255, 255, 0.06); --accent-primary: #818cf8; --accent-secondary: #c084fc; --accent-glow: rgba(129, 140, 248, 0.5); --input-bg: rgba(0, 0, 0, 0.2); --scrollbar-thumb: rgba(255, 255, 255, 0.1); --nav-height: 64px; }
+        [data-theme='nebula'] { --bg-image: radial-gradient(circle at 10% 20%, rgba(49,46,129,0.4), transparent 40%), radial-gradient(circle at 90% 80%, rgba(88,28,135,0.3), transparent 40%), linear-gradient(to bottom, #0f172a, #020617); --panel-bg: rgba(15,23,42,0.6); --accent-primary: #818cf8; --accent-secondary: #6366f1; }
+        [data-theme='crystal'] { --bg-color: #081b29; --bg-image: radial-gradient(circle at 50% 0%, rgba(34,211,238,0.15), transparent 50%), linear-gradient(135deg, #0f172a 0%, #111827 100%); --panel-bg: rgba(255,255,255,0.03); --panel-border: rgba(255,255,255,0.12); --accent-primary: #22d3ee; --accent-secondary: #06b6d4; --text-main: #f0f9ff; }
+        [data-theme='dawn'] { --bg-color: #fff1f2; --bg-image: linear-gradient(120deg, #fff1f2 0%, #ffe4e6 100%); --text-main: #334155; --text-sub: #64748b; --panel-bg: rgba(255,255,255,0.65); --panel-border: rgba(244,114,182,0.2); --accent-primary: #db2777; --accent-secondary: #be185d; --input-bg: rgba(255,255,255,0.5); --scrollbar-thumb: rgba(0,0,0,0.1); }
+        [data-theme='cyber'] { --bg-color: #000000; --bg-image: linear-gradient(90deg, rgba(20,20,20,0.5) 1px, transparent 1px), linear-gradient(rgba(20,20,20,0.5) 1px, transparent 1px); background-size: 40px 40px; --panel-bg: rgba(10,10,10,0.9); --panel-border: #333; --accent-primary: #2dd4bf; --accent-secondary: #0d9488; --input-bg: #000; }
+        [data-theme='ink'] { --bg-color: #f5f5f4; --bg-image: radial-gradient(#e7e5e4 1px, transparent 1px); background-size: 20px 20px; --text-main: #1c1917; --text-sub: #57534e; --panel-bg: rgba(255,255,255,0.85); --panel-border: rgba(0,0,0,0.08); --accent-primary: #44403c; --accent-secondary: #292524; --input-bg: #fff; --scrollbar-thumb: rgba(0,0,0,0.15); }
+
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg-color); background-image: var(--bg-image); background-attachment: fixed; color: var(--text-main); transition: all 0.5s ease; overflow-x: hidden; -webkit-tap-highlight-color: transparent; }
+        #bg-canvas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; pointer-events: none; }
+        .serif-font { font-family: 'Noto Serif SC', serif; } .mono-font { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: var(--panel-bg); backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px); border: 1px solid var(--panel-border); box-shadow: 0 8px 32px -8px rgba(0,0,0,0.15); border-radius: 1.5rem; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .glass-input { background: var(--input-bg); border: 1px solid transparent; color: var(--text-main); transition: all 0.2s; width: 100%; }
+        .glass-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: 0 0 0 1px var(--accent-primary); background: var(--panel-bg); }
+        .btn-gradient { background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)); color: white; transition: all 0.3s; }
+        .btn-gradient:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(0,0,0,0.2); filter: brightness(1.1); }
+        .btn-ghost { background: transparent; border: 1px solid var(--panel-border); color: var(--text-sub); transition: all 0.2s; }
+        .btn-ghost:hover { border-color: var(--accent-primary); color: var(--text-main); background: var(--panel-bg); }
+        .btn-accent { background: var(--accent-primary); color: white; transition: all 0.2s; }
+        .btn-accent:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .text-accent { color: var(--accent-primary) !important; }
+        .card-active { border-color: var(--accent-primary); background: linear-gradient(135deg, var(--panel-bg), rgba(var(--accent-primary), 0.1)); box-shadow: 0 0 20px rgba(var(--accent-primary), 0.2); }
+        .blur-content { filter: blur(8px); pointer-events: none; user-select: none; }
+        .fade-in { animation: fadeIn 0.5s ease-out; } @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .dropdown-enter { animation: dropIn 0.2s ease-out forwards; } @keyframes dropIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+        /* Chips & Tags */
+        .lore-chip { display: inline-flex; align-items: center; gap: 6px; padding: 5px 10px; background: rgba(0,0,0,0.2); border: 1px solid var(--panel-border); border-radius: 8px; cursor: pointer; transition: all 0.2s; color: var(--text-sub); font-size: 0.75rem; white-space: nowrap; user-select: none; }
+        .lore-chip:hover { background: var(--panel-bg); border-color: var(--accent-primary); color: var(--text-main); }
+        .lore-chip-icon { color: var(--accent-primary); font-size: 0.9em; }
+        .novel-tag { background: rgba(var(--accent-primary), 0.1); border: 1px solid var(--panel-border); color: var(--text-main); font-size: 0.75rem; padding: 3px 10px; border-radius: 99px; display: inline-flex; align-items: center; gap: 6px; cursor: default; }
+        .tag-remove:hover { color: #f43f5e; cursor: pointer; }
+        .tag-selectable { background: var(--input-bg); border: 1px solid transparent; padding: 5px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: all 0.2s; color: var(--text-sub); }
+        .tag-selectable.selected { background-color: var(--accent-primary); color: white; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        /* UI Elements */
+        .announcement-important { border-left: 4px solid #f59e0b; background: linear-gradient(90deg, rgba(245, 158, 11, 0.15), transparent); }
+        .tutorial-body ul { list-style: disc; padding-left: 1.2rem; margin-bottom: 1rem; color: var(--text-sub); }
+        .tutorial-body li { margin-bottom: 0.5rem; }
+        .tutorial-body h4 { font-weight: bold; color: var(--text-main); margin-top: 1.5rem; margin-bottom: 0.8rem; display: flex; align-items: center; gap: 8px; }
+        .tutorial-body code { background: rgba(0,0,0,0.3); padding: 2px 5px; border-radius: 4px; font-family: monospace; color: var(--accent-primary); }
+        ::-webkit-scrollbar { width: 6px; } ::-webkit-scrollbar-track { background: transparent; } ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 99px; } ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+        /* Zen Mode */
+        body.zen-mode #bg-canvas, body.zen-mode nav, body.zen-mode #main-content > div:not(#section-loom), body.zen-mode footer, body.zen-mode #pet-container, body.zen-mode #theme-menu, body.zen-mode #section-outline { display: none !important; }
+        body.zen-mode #section-loom { display: block; position: fixed; inset: 0; z-index: 50; padding: 0; margin: 0; background: var(--bg-color); height: 100dvh; }
+        body.zen-mode #loom-panel { height: 100dvh; border: none; border-radius: 0; background: transparent; box-shadow: none; }
+        body.zen-mode #loom-header { opacity: 0; transition: opacity 0.3s; }
+        body.zen-mode #loom-header:hover { opacity: 1; }
+        @media (max-width: 768px) { body.zen-mode #loom-header { opacity: 1 !important; padding: 10px; } body.zen-mode #chapter-editor { padding-top: 10px; font-size: 1.1rem; } }
+        body.zen-mode #chapter-editor { font-size: 1.25rem; line-height: 2; max-width: 900px; margin: 0 auto; padding-top: 5vh; height: calc(100% - 20px); }
+        #zen-exit-btn { display: none; }
+        body.zen-mode #zen-exit-btn { display: block; position: fixed; top: 20px; right: 20px; z-index: 60; opacity: 0.3; transition: opacity 0.3s; }
+        body.zen-mode #zen-exit-btn:hover { opacity: 1; }
+        /* AI Toolbar */
+        #ai-toolbar { position: fixed; z-index: 1000; background: var(--panel-bg); backdrop-filter: blur(16px); border: 1px solid var(--panel-border); border-radius: 12px; padding: 4px; display: flex; gap: 4px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.3); transform: translateY(10px); opacity: 0; pointer-events: none; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); }
+        #ai-toolbar.visible { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        @media (max-width: 640px) { #ai-toolbar { width: 90%; left: 5% !important; top: auto !important; bottom: 20px; justify-content: space-around; } }
+        .ai-tool-btn { padding: 6px 10px; border-radius: 8px; font-size: 0.75rem; color: var(--text-main); background: transparent; transition: background 0.2s; display: flex; align-items: center; gap: 4px; white-space: nowrap; }
+        .ai-tool-btn:hover { background: rgba(255,255,255,0.1); }
+        /* Canvas & Graphs */
+        #graph-canvas, #lore-canvas { width: 100%; height: 100%; border-radius: 1rem; cursor: grab; touch-action: none; }
+        #graph-canvas:active, #lore-canvas:active { cursor: grabbing; }
+        .grid-bg { background-image: linear-gradient(var(--panel-border) 1px, transparent 1px), linear-gradient(90deg, var(--panel-border) 1px, transparent 1px); background-size: 20px 20px; background-position: center center; }
+        /* Pet */
+        #pet-container { position: fixed; bottom: 20px; right: 20px; width: 100px; height: 100px; z-index: 999; pointer-events: none; }
+        @media (max-width: 768px) { #pet-container { display: none; } }
+        #pet-body { width: 60px; height: 60px; background: radial-gradient(circle at 30% 30%, var(--accent-primary), var(--accent-secondary)); border-radius: 50%; position: absolute; bottom: 10px; right: 10px; box-shadow: 0 0 20px var(--accent-primary), inset -5px -5px 10px rgba(0,0,0,0.2); pointer-events: auto; cursor: pointer; transition: transform 0.2s; animation: pet-float 3s ease-in-out infinite; -webkit-tap-highlight-color: transparent; }
+        #pet-body::after { content: ''; position: absolute; top: -10%; left: -10%; right: -10%; bottom: -10%; border-radius: 50%; background: var(--accent-primary); opacity: 0.3; filter: blur(10px); z-index: -1; }
+        .pet-eyes { position: absolute; top: 35%; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; }
+        .pet-eye { width: 8px; height: 8px; background: #fff; border-radius: 50%; position: relative; animation: pet-blink 4s infinite; }
+        .pet-eye::after { content: ''; position: absolute; width: 4px; height: 4px; background: #000; border-radius: 50%; top: 50%; left: 50%; transform: translate(-50%, -50%); }
+        #pet-bubble { position: absolute; bottom: 80px; right: 0; background: var(--panel-bg); border: 1px solid var(--panel-border); color: var(--text-main); font-size: 0.75rem; padding: 8px 12px; border-radius: 12px 12px 0 12px; width: 160px; opacity: 0; transform: scale(0.8); transform-origin: bottom right; transition: all 0.3s; backdrop-filter: blur(12px); pointer-events: none; }
+        #pet-bubble.show { opacity: 1; transform: scale(1); }
+        @keyframes pet-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        @keyframes pet-blink { 0%, 96%, 100% { height: 8px; transform: scaleY(1); } 98% { height: 1px; transform: scaleY(0.1); } }
+        .pet-happy { animation: pet-jump 0.5s infinite !important; }
+        @keyframes pet-jump { 0%, 100% { transform: translateY(0) scale(1,1); } 50% { transform: translateY(-15px) scale(0.9, 1.1); } }
+        /* Performance Optimization */
+        #outline-container { contain: content; will-change: transform; }
+        /* Critique */
+        #critique-content { white-space: pre-wrap; font-family: 'JetBrains Mono', monospace; line-height: 1.6; }
+        .critique-highlight { color: #fca5a5; font-weight: bold; border-bottom: 1px dashed #fca5a5; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-indigo-500/30">
+
+    <canvas id="bg-canvas"></canvas>
+    
+    <button id="zen-exit-btn" onclick="toggleZenMode()" class="btn-ghost px-4 py-2 rounded-full border border-red-500/30 text-red-400 font-bold backdrop-blur-md">✕ 退出禅模式</button>
+
+    <div id="ai-toolbar">
+        <button onclick="aiAssist('polish')" class="ai-tool-btn">✨ 润色</button>
+        <button onclick="aiAssist('expand')" class="ai-tool-btn">🔍 扩写</button>
+        <button onclick="aiAssist('shorten')" class="ai-tool-btn">✂️ 精简</button>
+        <div class="w-px h-4 bg-white/10 mx-1"></div>
+        <button onclick="aiAssist('synonym')" class="ai-tool-btn">🔄 换词</button>
+    </div>
+
+    <nav class="w-full h-16 fixed top-0 z-[100] glass-panel border-t-0 border-x-0 border-b border-[var(--panel-border)] flex items-center shadow-sm backdrop-blur-md !rounded-none">
+        <div class="max-w-[1400px] mx-auto w-full px-4 md:px-6 flex justify-between items-center h-full">
+            <div class="flex items-center gap-3 select-none shrink-0">
+                <div class="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-gradient-to-br from-[var(--accent-primary)] to-[var(--accent-secondary)] flex items-center justify-center text-white shadow-lg text-lg md:text-xl">✒️</div>
+                <div class="block"><h1 class="text-base md:text-lg font-bold tracking-widest serif-font text-accent leading-none">星云笔尖</h1><span class="hidden sm:block text-[10px] text-sub tracking-widest opacity-60 uppercase">Nebula Quill v4.0 (Pro)</span></div>
+            </div>
+            
+            <div class="flex items-center gap-2 md:gap-3">
+                <div class="hidden xl:flex items-center gap-3 px-4 py-1.5 rounded-full border border-[var(--panel-border)] bg-[var(--input-bg)]"><span id="live-clock" class="text-xs text-sub mono-font border-r border-[var(--panel-border)] pr-3">00:00</span><span id="save-status" class="text-xs text-sub">Ready</span></div>
+                
+                <div class="relative cursor-pointer p-2 hover:bg-[var(--panel-border)] rounded-xl transition opacity-70 hover:opacity-100" onclick="toggleAnnouncements()">
+                    <span class="text-lg">🔔</span>
+                    <span id="notification-dot" class="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full hidden animate-bounce shadow-sm"></span>
+                </div>
+
+                <button onclick="toggleTutorial()" class="p-2 rounded-xl hover:bg-[var(--panel-border)] transition text-lg opacity-70 hover:opacity-100 hidden sm:block" title="航行指南">📘</button>
+
+                <div id="engine-status" class="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[var(--panel-border)] bg-[var(--input-bg)]"><span class="w-2 h-2 rounded-full bg-gray-500 transition-colors" id="engine-dot"></span><span id="engine-name" class="text-xs font-mono text-sub">No Key</span></div>
+                
+                <button onclick="handleRefresh()" class="p-2 rounded-xl hover:bg-[var(--panel-border)] transition text-lg opacity-70 hover:opacity-100 hidden sm:block" title="刷新 (Ctrl+Z)：清空内容，保留Key">🔄</button>
+
+<button onclick="toggleResetModal()" class="p-2 rounded-xl hover:bg-[var(--panel-border)] transition text-lg opacity-70 hover:opacity-100 hidden sm:block text-red-400" title="重置：初始化所有设置">⚠️</button>
+
+<div class="relative shrink-0">
+    <button onclick="toggleThemeMenu()" id="theme-btn" class="p-2 rounded-xl hover:bg-[var(--panel-border)] transition text-lg opacity-70 hover:opacity-100" title="设置 & 主题">⚙️</button>
+    
+    <div id="theme-menu" class="absolute right-0 mt-4 w-48 glass-panel rounded-xl overflow-hidden hidden shadow-2xl z-[101] border border-[var(--panel-border)] p-1">
+        <div class="px-3 py-2 text-[10px] text-sub font-bold uppercase tracking-wider opacity-60">Theme</div>
+        <button onclick="changeTheme('nebula')" class="w-full text-left px-3 py-2 text-xs text-sub hover:text-main hover:bg-[var(--panel-bg)] rounded-lg flex items-center gap-2">🌌 星河 (Nebula)</button>
+        <button onclick="changeTheme('crystal')" class="w-full text-left px-3 py-2 text-xs text-sub hover:text-main hover:bg-[var(--panel-bg)] rounded-lg flex items-center gap-2">💎 水晶 (Crystal)</button>
+        <button onclick="changeTheme('dawn')" class="w-full text-left px-3 py-2 text-xs text-sub hover:text-main hover:bg-[var(--panel-bg)] rounded-lg flex items-center gap-2">🌅 晨曦 (Dawn)</button>
+        <div class="h-px bg-[var(--panel-border)] my-1"></div>
+        <div class="px-3 py-2 text-[10px] text-sub font-bold uppercase tracking-wider opacity-60">Data</div>
+        <button onclick="exportData()" class="w-full text-left px-3 py-2 text-xs text-sub hover:text-main hover:bg-[var(--panel-bg)] rounded-lg flex items-center gap-2">📤 备份数据</button>
+        <button onclick="document.getElementById('file-upload').click()" class="w-full text-left px-3 py-2 text-xs text-sub hover:text-main hover:bg-[var(--panel-bg)] rounded-lg flex items-center gap-2">📥 恢复数据</button>
+        <div class="px-3 py-1 mt-2">
+                <label class="text-[10px] text-sub font-bold uppercase tracking-wider opacity-60 block mb-1">Base URL</label>
+            <input type="text" id="custom-base-url" placeholder="API Base URL" class="w-full bg-[var(--input-bg)] text-xs rounded px-2 py-1 text-sub border border-transparent focus:border-[var(--accent-primary)] outline-none" onchange="updateBaseUrl()">
+        </div>
+            <div class="px-3 py-1 mb-2">
+            <label class="text-[10px] text-sub font-bold uppercase tracking-wider opacity-60 block mb-1">章节字数</label>
+            <input type="text" id="setting-default-words" placeholder="例如: 2000-3000" class="w-full bg-[var(--input-bg)] text-xs rounded px-2 py-1.5 text-sub border border-transparent focus:border-[var(--accent-primary)] outline-none" onchange="updateDefaultWords()">
+        </div>
+        <input type="file" id="file-upload" class="hidden" accept=".json" onchange="importData(this)">
+    </div>
+</div>
+                <button onclick="togglePet()" id="pet-btn" class="p-2 rounded-xl hover:bg-[var(--panel-border)] transition text-lg opacity-70 hover:opacity-100 text-accent hidden md:block" title="桌宠">👾</button>
+                <div class="flex items-center bg-[var(--input-bg)] rounded-xl px-1 py-1 border border-[var(--panel-border)] ml-1 md:ml-2">
+                    <div class="w-7 h-7 md:w-8 md:h-8 flex items-center justify-center rounded-lg bg-[var(--panel-bg)] mr-1 md:mr-2 text-sm md:text-base" id="engine-icon">🔑</div>
+                    <input type="password" id="api-key" placeholder="API Key" class="bg-transparent border-none text-xs w-16 md:w-24 text-main focus:ring-0 placeholder-opacity-50" oninput="detectEngine()">
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="pet-container">
+        <div id="pet-bubble">主人，该码字啦~ 📝</div>
+        <div id="pet-body" onclick="petInteract()">
+            <div class="pet-eyes">
+                <div class="pet-eye" id="eye-l"></div>
+                <div class="pet-eye" id="eye-r"></div>
+            </div>
+        </div>
+    </div>
+
+    <main id="main-content" class="max-w-[1400px] mx-auto w-full pt-20 md:pt-24 px-3 md:px-6 space-y-6 md:space-y-8 flex-grow pb-20">
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end pb-2 border-b border-[var(--panel-border)] gap-2">
+            <div><h2 class="text-xl md:text-2xl font-bold serif-font text-main">世界构筑</h2><p class="text-xs text-sub mt-1 opacity-70">“用星光编织你的宏大世界...”</p></div>
+            <button onclick="downloadNovel()" class="btn-gradient px-4 py-2 rounded-xl text-xs md:text-sm font-bold shadow-lg flex items-center gap-2 w-full md:w-auto justify-center">📥 导出全书 (TXT)</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 md:gap-6 h-auto lg:min-h-[600px]">
+            <div class="lg:col-span-8 glass-panel rounded-3xl p-2 flex flex-col h-[500px] lg:h-full overflow-hidden fade-in" style="animation-delay: 0.1s;">
+                <div class="flex gap-1 md:gap-2 p-1.5 md:p-2 mb-1 bg-[var(--input-bg)] rounded-2xl mx-1 md:mx-2 mt-2">
+                    <button onclick="switchTab('tab-prompt')" class="flex-1 px-2 md:px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-300 shadow-md bg-[var(--panel-bg)] text-accent whitespace-nowrap" id="btn-tab-prompt">✨ 梗概</button>
+                    <button onclick="switchTab('tab-lore')" class="flex-1 px-2 md:px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-300 opacity-60 hover:opacity-100 hover:bg-[var(--panel-bg)] whitespace-nowrap" id="btn-tab-lore">🌍 世界观</button>
+                    <button onclick="switchTab('tab-graph')" class="flex-1 px-2 md:px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-300 opacity-60 hover:opacity-100 hover:bg-[var(--panel-bg)] whitespace-nowrap" id="btn-tab-graph">🕸️ 星图</button>
+                </div>
+                <div class="p-3 md:p-4 flex-grow flex flex-col relative h-full overflow-y-auto">
+                    <div id="tab-prompt" class="h-full flex flex-col w-full">
+                        <div class="mb-4 flex flex-wrap gap-2 items-center min-h-[40px] bg-[var(--input-bg)] p-2.5 rounded-xl border border-[var(--panel-border)]">
+                            <button onclick="toggleTagSelector()" class="text-xs btn-ghost px-3 py-1.5 rounded-full flex items-center gap-1 border-dashed border border-current opacity-70 hover:opacity-100 transition hover:border-solid hover:bg-[var(--accent-primary)] hover:text-white hover:border-transparent whitespace-nowrap"><span>🏷️ 标签</span></button>
+                            <div id="selected-tags-container" class="flex flex-wrap gap-2"></div>
+                        </div>
+                        <textarea id="novel-prompt" class="glass-input w-full flex-grow rounded-2xl p-4 md:p-5 resize-none mb-4 text-sm md:text-base leading-relaxed min-h-[200px]" placeholder="在此输入故事核心梗概...&#10;例如：赛博朋克背景下，一个专门替机器人写遗书的作家..." oninput="debounceSave()"></textarea>
+                        <div class="flex justify-end"><button id="btn-gen-idea" onclick="generateInitialAnalysis()" class="btn-gradient font-bold py-3 px-8 md:px-10 rounded-xl shadow-lg flex items-center gap-2 text-sm transition-transform hover:scale-105 active:scale-95 w-full md:w-auto justify-center"><span>🧠 构思世界架构</span></button></div>
+                    </div>
+                    
+                    <div id="tab-lore" class="h-full flex-col hidden w-full">
+                        <div class="flex flex-col gap-3 mb-3">
+                            <div class="flex justify-between items-center border-b border-[var(--panel-border)] pb-2 px-1">
+                                <div class="flex items-center gap-2">
+                                    <div class="w-8 h-8 rounded-lg bg-[var(--input-bg)] flex items-center justify-center text-accent">📚</div>
+                                    <div><h3 class="font-bold text-sm text-main leading-none">创世档案</h3></div>
+                                </div>
+                                <div class="bg-[var(--input-bg)] p-1 rounded-lg flex border border-[var(--panel-border)]">
+                                    <button onclick="setLoreView('text')" id="btn-lore-text" class="px-3 py-1 text-xs font-bold rounded-md bg-[var(--panel-bg)] text-accent shadow-sm transition-all">📝 描述</button>
+                                    <button onclick="setLoreView('graph')" id="btn-lore-graph" class="px-3 py-1 text-xs font-bold rounded-md text-sub hover:text-main transition-all">🕸️ 拓扑</button>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 px-1 w-full">
+                                <button class="lore-chip shrink-0" onclick="insertLoreTemplate('等级体系')"><span class="lore-chip-icon">📈</span>等级</button>
+                                <button class="lore-chip shrink-0" onclick="insertLoreTemplate('地理环境')"><span class="lore-chip-icon">🗺️</span>地图</button>
+                                <button class="lore-chip shrink-0" onclick="insertLoreTemplate('势力组织')"><span class="lore-chip-icon">🏰</span>势力</button>
+                                <div class="w-px h-4 bg-[var(--panel-border)] mx-1 shrink-0"></div>
+                                <button onclick="aiGenLore()" class="lore-chip !border-[var(--accent-primary)] !text-accent hover:!bg-[var(--accent-primary)] hover:!text-white shadow-sm shrink-0"><span class="lore-chip-icon">✨</span>AI 推演</button>
+                            </div>
+                        </div>
+                        <div class="relative flex-grow overflow-hidden rounded-xl border border-[var(--panel-border)] bg-[var(--input-bg)] group min-h-[300px]">
+                            <div id="lore-loading" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-50 hidden flex flex-col items-center justify-center rounded-xl"><div class="animate-spin text-3xl mb-2 text-accent">🔮</div><p class="text-xs text-main animate-pulse">正在推演世界法则...</p></div>
+                            <div id="lore-text-view" class="w-full h-full absolute inset-0 z-10 p-1">
+                                <textarea id="novel-lore" class="w-full h-full bg-transparent p-4 md:p-5 resize-none text-xs md:text-sm mono-font focus:outline-none" style="background-image: linear-gradient(var(--panel-border) 1px, transparent 1px); background-size: 100% 32px; line-height: 32px;" placeholder="【创世档案】&#10;格式：&#10;【大标题】&#10;名称：描述" oninput="debounceSave()"></textarea>
+                            </div>
+                            <div id="lore-graph-view" class="w-full h-full absolute inset-0 z-20 flex flex-col grid-bg hidden bg-[var(--bg-color)]">
+                                <div class="absolute top-3 left-3 z-10 bg-[var(--panel-bg)] backdrop-blur px-3 py-1.5 rounded-lg text-xs text-sub border border-[var(--panel-border)] pointer-events-none shadow-sm flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></span><span>Force Layout</span></div>
+                                <canvas id="lore-canvas"></canvas>
+                                <button onclick="parseLoreToGraph()" class="absolute bottom-3 right-3 btn-ghost text-xs px-3 py-1.5 rounded-lg z-10 bg-[var(--panel-bg)] shadow-sm backdrop-blur border border-[var(--panel-border)] hover:text-accent">🔄 刷新</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-graph" class="h-full flex-col hidden w-full relative min-h-[300px]">
+                        <div class="absolute top-2 left-2 z-10 bg-[var(--panel-bg)] px-3 py-1 rounded-lg text-xs text-sub border border-[var(--panel-border)] pointer-events-none">✨ 拖动星体整理关系</div>
+                        <canvas id="graph-canvas"></canvas>
+                        <button onclick="initGraph()" class="absolute bottom-2 right-2 btn-ghost text-xs px-3 py-1 rounded-lg">重置视图</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="lg:col-span-4 glass-panel rounded-3xl p-4 md:p-5 flex flex-col h-[400px] lg:h-full relative fade-in" style="animation-delay: 0.2s;">
+                <div class="flex justify-between items-center mb-4 pb-3 border-b border-[var(--panel-border)]">
+                    <h2 class="text-base font-bold text-accent serif-font flex items-center gap-2">👥 人物图鉴</h2>
+                    <div class="flex gap-2">
+                        <button onclick="aiGenerateCharacter(this)" class="px-2 md:px-3 py-1 rounded-lg text-xs font-bold border border-indigo-500/30 text-indigo-300 hover:bg-indigo-500/10 transition-colors flex items-center gap-1 whitespace-nowrap">✨ AI 捏人</button>
+                        <button onclick="toggleModal('char-modal')" class="btn-ghost px-2 md:px-3 py-1 rounded-lg text-xs opacity-80 hover:opacity-100 whitespace-nowrap">+ 手搓</button>
+                    </div>
+                </div>
+                <div id="character-list" class="flex-grow overflow-y-auto grid grid-cols-1 xl:grid-cols-2 gap-3 pr-2 custom-scrollbar content-start max-h-[600px]">
+                    <div class="text-center text-sub text-xs mt-20 opacity-50 italic">暂无角色数据<br>请点击左侧“构思”生成</div>
+                </div>
+            </div>
+        </div>
+
+        <section id="section-outline" class="glass-panel rounded-3xl p-4 md:p-6 hidden fade-in relative transition-all border-l-4 border-l-transparent">
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 pb-4 border-b border-[var(--panel-border)] gap-4">
+                <div class="flex flex-wrap items-center gap-2 md:gap-4 w-full md:w-auto">
+                    <div class="p-2.5 bg-[var(--input-bg)] rounded-xl text-accent text-xl shadow-inner">🗺️</div>
+                    <div><h2 class="text-lg font-bold serif-font text-main">章节航图</h2><div class="text-xs text-sub mt-0.5 opacity-80">Storyline Roadmap</div></div>
+                    <div class="ml-auto md:ml-4 flex items-center gap-2 glass-input px-3 py-1.5 rounded-lg border-0 w-auto"><span class="text-xs text-sub">目标:</span><input type="number" id="target-total-chapters" value="100" class="bg-transparent w-10 text-center text-xs font-bold focus:outline-none text-main" onchange="updateProgressUI(); saveData()"><span class="text-xs text-sub">章</span></div>
+                    <span id="chapter-progress-text" class="text-xs text-sub font-mono bg-[var(--input-bg)] px-2 py-0.5 rounded border border-[var(--panel-border)]">0/100</span>
+                </div>
+                <button onclick="generateMoreOutline()" id="btn-add-outline" class="btn-ghost px-5 py-2.5 rounded-xl text-sm font-bold shadow-sm flex items-center gap-2 hover:bg-[var(--input-bg)] w-full md:w-auto justify-center"><span>+ 延展剧情</span><div id="outline-spinner" class="hidden w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin"></div></button>
+            </div>
+            <div class="relative min-h-[320px]">
+                <div id="outline-empty-state" class="absolute inset-0 flex flex-col items-center justify-center text-sub opacity-30 pointer-events-none"><span class="text-6xl mb-4 grayscale opacity-50">🌌</span><p class="text-xs font-bold uppercase tracking-widest">星图未绘 · 等待观测</p></div>
+                <div id="outline-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 max-h-[420px] overflow-y-auto pr-2 pb-24 custom-scrollbar"></div>
+                <div class="absolute bottom-0 left-0 w-full h-28 bg-gradient-to-t from-[var(--panel-bg)] to-transparent pointer-events-none flex justify-center items-end pb-6 z-10">
+                     <button onclick="activateLoom()" class="pointer-events-auto btn-gradient text-white text-lg font-bold py-3.5 px-12 rounded-full shadow-2xl transition transform hover:-translate-y-1 flex items-center gap-3 backdrop-blur-md border border-white/10 group"><span>🚀 进入星云织机</span><span class="group-hover:translate-x-1 transition-transform">→</span></button>
+                </div>
+            </div>
+        </section>
+
+        <section id="section-loom" class="hidden fade-in space-y-4">
+            <div id="active-outline-module" class="glass-panel p-4 md:p-5 border-l-4 border-l-amber-500 bg-amber-500/5 transition-all relative hidden shadow-[0_0_20px_rgba(245,158,11,0.1)]">
+                <div class="flex flex-col md:flex-row justify-between items-start mb-2 gap-3 md:gap-4">
+                    <div class="w-full">
+                        <h3 class="text-xs font-bold text-amber-400 flex items-center gap-2 uppercase tracking-widest opacity-80">
+                            <span>📌</span> 当前大纲
+                        </h3>
+                        <input type="text" id="active-outline-title" class="bg-transparent border-none text-lg md:text-xl font-bold text-main focus:ring-0 p-0 w-full mt-1 placeholder-white/20" placeholder="章节标题" oninput="updateActiveOutlineData()">
+                    </div>
+                    <div class="flex items-center gap-2 bg-[var(--input-bg)] px-3 py-1.5 rounded-lg border border-amber-500/30 shrink-0 self-end md:self-auto">
+                        <span class="text-xs text-amber-300 font-bold">🎯 字数:</span>
+                        <input type="text" id="active-outline-words" value="2000-3000" class="bg-transparent border-none text-xs text-amber-200 w-20 text-center focus:ring-0 p-0 font-mono font-bold" onchange="updateActiveOutlineData()">
+                    </div>
+                </div>
+                <textarea id="active-outline-desc" class="w-full bg-[var(--input-bg)] rounded-xl p-3 text-sm text-sub resize-y min-h-[80px] border border-transparent focus:border-amber-500/50 outline-none leading-relaxed" placeholder="修订本章大纲，AI 将遵循此设定..." oninput="updateActiveOutlineData()"></textarea>
+            </div>
+
+            <div class="glass-panel rounded-3xl p-1.5 h-[75dvh] md:h-[80vh] flex flex-col border-t-4 border-[var(--accent-primary)] shadow-2xl" id="loom-panel">
+                <div id="loom-header" class="p-3 md:p-4 rounded-t-2xl flex flex-col md:flex-row justify-between items-center gap-3 bg-[var(--input-bg)] border-b border-[var(--panel-border)]">
+                    <div class="flex items-center gap-2 w-full md:w-auto">
+                        <select id="chapter-selector" class="glass-input rounded-xl px-3 py-2 md:px-4 md:py-2.5 font-bold w-full md:w-72 text-xs md:text-sm shadow-sm" onchange="selectChapter(this.value)"><option value="">选择章节...</option></select>
+                        <span id="current-word-count" class="text-[10px] md:text-xs text-sub mono-font whitespace-nowrap bg-[var(--panel-bg)] px-2 md:px-3 py-1.5 rounded-lg border border-[var(--panel-border)]">0 W</span>
+                    </div>
+                    <div class="flex gap-2 w-full md:w-auto justify-end overflow-x-auto pb-1 md:pb-0">
+                        <button onclick="toggleZenMode()" class="btn-ghost px-3 py-2 rounded-xl text-xs whitespace-nowrap" title="Zen 模式">🧘</button>
+                        <button onclick="aiCritique()" class="btn-ghost px-3 md:px-4 py-2 rounded-xl shadow-sm font-bold text-xs md:text-sm bg-red-500/5 hover:bg-red-500/10 text-red-400 border-red-400/20 whitespace-nowrap">🌶️ 审稿</button>
+                        <button onclick="generateChapterText(false)" class="btn-accent px-4 md:px-5 py-2 rounded-xl shadow-sm font-bold text-xs md:text-sm whitespace-nowrap">🖋️ 起笔</button>
+                        <button onclick="generateChapterText(true)" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 md:px-5 py-2 rounded-xl shadow-sm font-bold text-xs md:text-sm flex items-center gap-1 transition-colors whitespace-nowrap"><span>✒️ 续写</span></button>
+                    </div>
+                </div>
+                <div class="flex-grow relative rounded-b-2xl overflow-hidden bg-[var(--panel-bg)]">
+                    <div id="loading-overlay" class="absolute inset-0 bg-black/60 backdrop-blur-sm z-30 hidden flex flex-col items-center justify-center"><div class="animate-spin text-5xl mb-6 text-accent filter drop-shadow-[0_0_15px_var(--accent-glow)]">🛸</div><p class="text-xl font-bold serif-font text-main animate-pulse">引擎轰鸣中...</p></div>
+                    <textarea id="chapter-editor" class="w-full h-full bg-transparent p-4 md:p-20 resize-none leading-loose text-base md:text-lg serif-font focus:outline-none placeholder-opacity-30 text-main" placeholder="在此处写作...&#10;选中文本可触发 AI 润色/扩写工具。" oninput="updateWordCount(); petHappy(); debounceSave()"></textarea>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="w-full py-8 mt-12 border-t border-[var(--panel-border)] bg-[var(--input-bg)] text-center text-sub text-xs">
+        <p>&copy; 2025 星云笔尖 v4.0 Pro | Powered by DeepSeek</p>
+    </footer>
+
+    <div id="critique-modal" class="fixed inset-0 z-[120] hidden">
+        <div class="absolute inset-0 bg-black/90 backdrop-blur-sm transition-opacity" onclick="toggleCritiqueModal()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-2xl shadow-[0_0_50px_rgba(239,68,68,0.2)] border border-red-500/30 overflow-hidden flex flex-col max-h-[85vh] animate-in fade-in zoom-in duration-300">
+            <div class="p-4 md:p-5 border-b border-red-500/20 flex justify-between items-center bg-gradient-to-r from-red-900/40 to-transparent">
+                <h3 class="text-lg md:text-xl font-bold text-red-200 flex items-center gap-3"><span class="text-2xl filter drop-shadow-[0_0_5px_red]">🌶️</span> 毒舌报告</h3>
+                <button onclick="toggleCritiqueModal()" class="text-red-300 hover:text-red-100 text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-grow bg-[var(--input-bg)]">
+                <div id="critique-content" class="text-xs md:text-sm text-gray-300 leading-loose font-mono whitespace-pre-wrap"></div>
+            </div>
+            <div class="p-4 md:p-5 border-t border-red-500/20 bg-black/40 flex gap-3 justify-end">
+                <button onclick="copyCritique()" class="px-4 py-2 rounded-xl border border-red-500/30 text-red-300 text-xs md:text-sm font-bold flex items-center gap-2">📄 复制</button>
+                <button onclick="toggleCritiqueModal()" class="btn-gradient from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 px-5 py-2 rounded-xl text-white font-bold text-xs md:text-sm">😤 接受批评</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="announcement-modal" class="fixed inset-0 z-[110] hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleAnnouncements()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="p-5 border-b border-[var(--panel-border)] flex justify-between items-center bg-[var(--input-bg)]"><h3 class="text-lg font-bold text-main">📢 星云广播</h3><button onclick="toggleAnnouncements()" class="text-sub hover:text-main text-2xl">&times;</button></div>
+            <div id="announcement-list" class="flex-grow overflow-y-auto p-5 space-y-4"></div>
+            <div class="p-5 border-t border-[var(--panel-border)] text-center bg-[var(--input-bg)]"><button onclick="markAllAsRead()" class="w-full btn-accent py-2.5 rounded-xl font-bold text-sm shadow-md">我知道了</button></div>
+        </div>
+    </div>
+
+    <div id="tutorial-modal" class="fixed inset-0 z-[110] hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleTutorial()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-3xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="p-6 border-b border-[var(--panel-border)] flex justify-between items-center bg-[var(--input-bg)]"><h3 class="text-xl font-bold serif-font text-accent flex items-center gap-2"><span>📘</span> 航行指南</h3><button onclick="toggleTutorial()" class="text-sub hover:text-main text-2xl">&times;</button></div>
+            <div class="p-6 md:p-8 overflow-y-auto text-sm text-sub leading-relaxed tutorial-body flex-grow">
+                <h4>🚀 1. 引擎启动</h4>
+                <ul><li><b>API Key</b>: 右上角输入 DeepSeek Key (sk-...)，系统自动识别。</li></ul>
+                <h4>🌍 2. 世界构筑</h4>
+                <ul><li><b>创世档案</b>: 左侧写设定，右侧看图谱。格式：<code>【父节点】</code> 或 <code>子节点：描述</code>。</li>
+                <li><b>星图交互</b>: PC 滚轮缩放，手机双指缩放。</li></ul>
+                <h4>✍️ 3. 沉浸写作</h4>
+                <ul><li><b>Zen 模式</b>: 点击 🧘 进入全屏。</li>
+                <li><b>AI 辅助</b>: 选中文字可触发润色/扩写。</li></ul>
+                <h4>⌨️ 快捷键</h4>
+                <ul><code>Ctrl+Z</code>: 撤销/重置应用数据 (非输入框时)。</ul>
+            </div>
+            <div class="p-5 border-t border-[var(--panel-border)] text-center bg-[var(--input-bg)]"><button onclick="toggleTutorial()" class="btn-accent px-10 py-2.5 rounded-xl font-bold text-sm shadow-lg">开始创作</button></div>
+        </div>
+    </div>
+
+    <div id="disclaimer-modal" class="fixed inset-0 z-[120] hidden">
+        <div class="absolute inset-0 bg-black/95 backdrop-blur-xl"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-2xl shadow-2xl border border-red-500/20 p-0 flex flex-col max-h-[85vh]">
+            <div class="p-6 border-b border-[var(--panel-border)] bg-[var(--input-bg)]"><h3 class="text-xl font-bold text-red-400 flex items-center gap-2"><span>⚖️</span> 免责声明</h3></div>
+            <div class="p-6 md:p-8 overflow-y-auto text-sm text-sub space-y-5 leading-relaxed flex-grow">
+                <div class="bg-red-500/10 p-4 rounded-xl border border-red-500/20 text-red-200 font-bold">⚠️ 请务必阅读：本地化应用声明</div>
+<p><b>1. AI 生成声明：</b> 本工具生成的所有内容均由 DeepSeek 人工智能模型生成。内容具有随机性，可能包含虚构、错误或不准确的信息（幻觉）。生成内容不代表开发者立场，请用户在使用前自行核实。</p>
+                <p><b>2. 合规使用承诺：</b> 用户承诺不使用本工具生成违反法律法规、违反公序良俗、色情低俗、暴力恐怖、政治敏感或侵犯他人权益的内容。因用户不当使用产生的一切法律责任由用户自行承担。</p>
+                <p><b>3. 数据隐私与安全：</b> 本工具为<b>纯静态网页应用</b>。您的 API Key、小说设定、大纲和正文均<b>仅存储在您本地浏览器的 LocalStorage 中</b>，不会上传至本工具开发者的服务器。</p>
+                <p><b>4. 版权声明：</b> 本工具所呈现的<b>所有内容</b>（包括但不限于小说设定、大纲、正文、角色设定、插画、音乐、视频等）<b>均属于原创</b>，未经原作者许可，不得转载、修改、出版、发行、上传至任何媒体平台。任何媒体平台未经原作者许可，不得使用本工具所呈现的任何内容。</p>
+                <p><b>5. 免责条款：</b> 开发者不对因使用本工具而产生的任何直接或间接损失负责。包括但不限于数据丢失、版权纠纷等。</p>
+                <p><b>6. 其他声明：</b> 开发者保留随时修改、中止或终止本工具的权利，开发者对用户使用本工具造成的任何损失不承担任何责任。</p>
+                <p><b>7. qq联系方式：</b> 如有任何疑问或建议，请联系开发者：<a href="mailto:<EMAIL>" class="text-red-400 hover:text-red-200"><li><EMAIL>2537975460@qq.com</a></li></p>
+                <P><b>8.谷歌邮箱：</b>如有任何疑问或建议，请联系开发者：<a href="mailto:<EMAIL>" class="text-red-400 hover:text-red-200"><li>zh2335897181@gmail.com</a></li></P>
+              
+            </div>
+            <div class="p-6 border-t border-[var(--panel-border)] text-center bg-[var(--input-bg)]"><button onclick="acceptDisclaimer()" class="btn-accent px-12 py-3 rounded-full font-bold shadow-xl hover:shadow-2xl transition-all hover:-translate-y-1">我已阅读并同意</button></div>
+        </div>
+    </div>
+
+    <div id="reset-modal" class="fixed inset-0 z-[130] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="toggleResetModal()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-sm shadow-2xl border border-red-500/30 p-6 flex flex-col items-center text-center">
+            <div class="text-4xl mb-4">⚠️</div>
+            <h3 class="text-lg font-bold text-main mb-2">确认重置应用？</h3>
+            <p class="text-sm text-sub mb-6 leading-relaxed">清空所有内容 (保留 API Key)。<br>操作无法撤销。</p>
+            <div class="flex gap-3 w-full">
+                <button onclick="toggleResetModal()" class="flex-1 btn-ghost py-2.5 rounded-xl text-sm">取消</button>
+                <button onclick="performReset()" class="flex-1 bg-red-500 hover:bg-red-600 text-white py-2.5 rounded-xl font-bold text-sm shadow-lg transition-colors">确认重置</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="refresh-modal" class="fixed inset-0 z-[130] hidden">
+    <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="toggleRefreshModal()"></div>
+    <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-sm shadow-2xl border border-indigo-500/30 p-6 flex flex-col items-center text-center">
+        <div class="text-4xl mb-4">🔄</div>
+        <h3 class="text-lg font-bold text-main mb-2">刷新创作区？</h3>
+        <p class="text-sm text-sub mb-6 leading-relaxed">这将清空梗概、角色和大纲。<br><span class="text-emerald-400 font-bold">✨ API Key 和设置会被保留</span></p>
+        <div class="flex gap-3 w-full">
+            <button onclick="toggleRefreshModal()" class="flex-1 btn-ghost py-2.5 rounded-xl text-sm">取消</button>
+            <button onclick="performRefresh()" class="flex-1 btn-gradient py-2.5 rounded-xl font-bold text-sm shadow-lg text-white">确认刷新</button>
+        </div>
+    </div>
+</div>
+
+    <div id="tag-selector-modal" class="fixed inset-0 z-[120] hidden">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-sm" onclick="toggleTagSelector()"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl w-11/12 max-w-2xl shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+            <div class="p-5 border-b border-[var(--panel-border)] flex justify-between items-center bg-[var(--input-bg)]"><h3 class="text-lg font-bold text-main flex items-center gap-2"><span class="text-xl">🏷️</span> 标签全书</h3><button onclick="toggleTagSelector()" class="text-sub hover:text-main text-2xl leading-none">&times;</button></div>
+            <div class="p-6 overflow-y-auto custom-scrollbar flex-grow bg-[var(--panel-bg)]" id="tag-list-container"></div>
+            <div class="p-4 border-t border-[var(--panel-border)] bg-[var(--input-bg)] flex flex-col sm:flex-row gap-3">
+                <div class="flex flex-1 gap-2"><input type="text" id="custom-tag-input" class="glass-input rounded-xl px-4 text-sm flex-grow" placeholder="自定义标签..."><button onclick="addCustomTag()" class="btn-ghost px-5 rounded-xl text-sm font-bold">添加</button></div>
+                <button onclick="aiBrainstormTags()" class="btn-accent px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 justify-center shadow-lg"><span>✨ AI 推荐</span></button>
+                <button onclick="toggleTagSelector()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-xl font-bold text-sm">完成</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="char-modal" class="fixed inset-0 z-[110] hidden">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="toggleModal('char-modal')"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 glass-panel rounded-2xl p-6 md:p-8 w-11/12 max-w-md shadow-2xl">
+            <h3 class="text-xl font-bold mb-6 serif-font text-main">创造新角色</h3>
+            <div class="space-y-4">
+                <input type="text" id="new-char-name" placeholder="姓名" class="glass-input w-full rounded-xl px-4 py-3 text-sm">
+                <input type="text" id="new-char-role" placeholder="定位 (如: 主角)" class="glass-input w-full rounded-xl px-4 py-3 text-sm">
+                <input type="text" id="new-char-tags" placeholder="标签 (逗号分隔)" class="glass-input w-full rounded-xl px-4 py-3 text-sm">
+                <textarea id="new-char-desc" placeholder="简述" class="glass-input w-full rounded-xl px-4 py-3 text-sm h-24"></textarea>
+            </div>
+            <div class="flex gap-4 mt-8">
+                <button onclick="addManualCharacter()" class="flex-1 btn-accent py-2.5 rounded-xl font-bold text-sm shadow-lg">保存</button>
+                <button onclick="toggleModal('char-modal')" class="flex-1 btn-ghost py-2.5 rounded-xl text-sm">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- IndexedDB 简易封装工具 (New) ---
+        const DB_CONFIG = { name: 'NebulaQuillDB', version: 1, storeName: 'novel_data' };
+        
+        const idb = {
+            db: null,
+            init() {
+                return new Promise((resolve, reject) => {
+                    const req = indexedDB.open(DB_CONFIG.name, DB_CONFIG.version);
+                    req.onupgradeneeded = (e) => { e.target.result.createObjectStore(DB_CONFIG.storeName); };
+                    req.onsuccess = (e) => { this.db = e.target.result; resolve(this.db); };
+                    req.onerror = (e) => reject(e);
+                });
+            },
+            async put(key, value) {
+                if (!this.db) await this.init();
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(DB_CONFIG.storeName, 'readwrite');
+                    const req = tx.objectStore(DB_CONFIG.storeName).put(value, key);
+                    req.onsuccess = () => resolve();
+                    req.onerror = (e) => reject(e);
+                });
+            },
+            async get(key) {
+                if (!this.db) await this.init();
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(DB_CONFIG.storeName, 'readonly');
+                    const req = tx.objectStore(DB_CONFIG.storeName).get(key);
+                    req.onsuccess = (e) => resolve(e.target.result);
+                    req.onerror = (e) => reject(e);
+                });
+            }
+        };
+
+        // --- 粒子系统 & Canvas (优化版: 可见性检查) ---
+        class Particle { 
+            constructor(width, height) { 
+                this.x = Math.random() * width; this.y = Math.random() * height; 
+                this.vx = (Math.random()-0.5)*0.2; this.vy = (Math.random()-0.5)*0.2; 
+                this.size = Math.random()*2; this.opacity = Math.random()*0.5; this.fade = Math.random()*0.005; 
+            } 
+            update(width, height) { 
+                this.x+=this.vx; this.y+=this.vy; this.opacity+=this.fade; 
+                if(this.opacity>0.8||this.opacity<0.1) this.fade=-this.fade; 
+                if(this.x<0)this.x=width; if(this.x>width)this.x=0; if(this.y<0)this.y=height; if(this.y>height)this.y=0; 
+            } 
+            draw(ctx) { 
+                let c='255,255,255'; 
+                if(store.theme==='dawn')c='255,215,0'; if(store.theme==='cyber')c='45,212,191'; if(store.theme==='ink')c='60,60,60'; 
+                ctx.beginPath(); 
+                if(store.theme==='crystal'){ctx.moveTo(this.x,this.y-4);ctx.lineTo(this.x+1,this.y-1);ctx.lineTo(this.x+4,this.y);ctx.lineTo(this.x+1,this.y+1);ctx.lineTo(this.x,this.y+4);ctx.lineTo(this.x-1,this.y+1);ctx.lineTo(this.x-4,this.y);ctx.lineTo(this.x-1,this.y-1);}
+                else{ctx.arc(this.x,this.y,this.size,0,Math.PI*2);} 
+                ctx.fillStyle=`rgba(${c},${this.opacity})`; ctx.fill(); 
+            } 
+        }
+
+        let particles = []; let canvasWidth, canvasHeight;
+        function resizeCanvas() { const canvas = document.getElementById('bg-canvas'); if(!canvas) return; canvasWidth = window.innerWidth; canvasHeight = window.innerHeight; canvas.width = canvasWidth; canvas.height = canvasHeight; }
+        function initP() { particles=[]; for(let i=0;i<60;i++) particles.push(new Particle(canvasWidth, canvasHeight)); } 
+        function animP() { 
+            if (document.hidden) return; // 优化：页面不可见时不渲染
+            const canvas = document.getElementById('bg-canvas'); if(!canvas) return;
+            const ctx = canvas.getContext('2d'); ctx.clearRect(0,0,canvasWidth,canvasHeight); 
+            particles.forEach(p=>{p.update(canvasWidth, canvasHeight);p.draw(ctx);}); 
+            requestAnimationFrame(animP); 
+        }
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) { animP(); if(loreViewMode === 'graph') { isGraphStable = false; animateLoreGraph(); } } });
+
+        // --- 核心状态 ---
+        let store = { defaultWordCount: '2000-3000', apiKey: '', concept: '', lore: '', targetChapters: 100, characters: [], outline: [], currentChapterId: null, chapterTexts: {}, theme: 'crystal', tags: [], engine: 'none', baseUrl: 'https://api.deepseek.com/chat/completions' };
+        let saveTimeout;
+        const NOVEL_TAGS = { "🏆 男频精选": ["玄幻", "都市", "仙侠", "科幻", "悬疑", "奇幻", "历史", "游戏", "体育", "军事", "武侠", "轻小说"], "🌸 女频精选": ["现言", "古言", "幻言", "校园", "青春", "纯爱", "宫斗", "重生", "种田", "豪门", "女强", "快穿"], "⚡ 核心元素": ["系统", "神医", "脑洞", "鉴宝", "恐怖", "推理", "谍战", "末世", "无限流", "赛博朋克", "克苏鲁", "灵气复苏", "诸天万界"], "🎭 主角人设": ["腹黑", "高冷", "病娇", "赘婿", "战神", "神豪", "学霸", "奶爸", "杀伐果断", "智商在线", "反派", "老六"], "🎨 风格基调": ["爽文", "搞笑", "轻松", "热血", "暗黑", "治愈", "甜宠", "虐文", "无敌", "迪化", "群像", "幕后流"] };
+        const systemAnnouncements = [{ id: 999, title: "🔑 新手必读：免费获取 DeepSeek API Key", date: "置顶", type: "important", content: `<div class="space-y-2"><p>DeepSeek 注册即送免费额度，无需绑卡！</p><ol class="list-decimal pl-4 space-y-1 opacity-80"><li>访问 <a href="https://platform.deepseek.com/" target="_blank" class="underline font-bold text-accent">DeepSeek 开放平台</a>。</li><li>点击左侧 <b>API Keys</b> 菜单 -> <b>Create API Key</b>。</li><li>复制 <code class="bg-black/20 px-1 rounded border border-white/10">sk-</code> 开头的密钥，粘贴到本网页右上角。</li></ol></div>` }, { id: 400, title: "v4.0 Pro 更新日志", date: "2025-07-06", type: "update", content: "• <b>无限存储</b>: 升级 IndexedDB，彻底解决存储上限问题。<br>• <b>AI 智商提升</b>: 全面优化世界观、角色生成逻辑。<br>• <b>性能优化</b>: 增加智能休眠，减少发热。" }];
+
+        // --- 初始化 & 生命周期 (Async) ---
+        window.onload = async function() {
+            // Core
+            await idb.init(); 
+            await loadData(); 
+            
+            changeTheme(store.theme || 'crystal'); 
+            resizeCanvas(); initP(); animP(); 
+            window.addEventListener('resize', resizeCanvas);
+            setInterval(updateClock, 1000); updateClock(); detectEngine();
+            renderTagSelector(); renderSelectedTags(); 
+            
+            const hasAgreed = localStorage.getItem('agreed_to_terms_v1'); 
+            if(hasAgreed!=='true') showDisclaimer(false); 
+            else checkAndAutoPopAnnouncements();
+
+            document.addEventListener('click', (e) => { const m = document.getElementById('theme-menu'); const b = document.getElementById('theme-btn'); if(m && !m.contains(e.target) && !b.contains(e.target)) m.classList.add('hidden'); });
+            const editor = document.getElementById('chapter-editor');
+            if(editor) { editor.addEventListener('mouseup', handleSelection); editor.addEventListener('keyup', handleSelection); editor.addEventListener('touchend', handleSelection); }
+            document.addEventListener('mousedown', (e) => { const toolbar = document.getElementById('ai-toolbar'); if (toolbar && !toolbar.contains(e.target) && e.target !== editor) toolbar.classList.remove('visible'); });
+            document.addEventListener('touchstart', (e) => { const toolbar = document.getElementById('ai-toolbar'); if (toolbar && !toolbar.contains(e.target) && e.target !== editor) toolbar.classList.remove('visible'); });
+            const urlInput = document.getElementById('custom-base-url'); if(urlInput && store.baseUrl) urlInput.value = store.baseUrl;
+            setTimeout(petHappy, 1000);
+        };
+
+        // --- Lore Tab Logic (优化版: 物理休眠) ---
+        let loreNodes = []; let loreOffset = { x: 0, y: 0 }; let loreScale = 1; let isDraggingLore = false; let lastLoreMousePos = { x: 0, y: 0 }; let loreViewMode = 'text'; let loreAnimationId = null; let lastTouchDist = 0;
+        let isGraphStable = false; // 动能检测
+
+        function setLoreView(mode) {
+            loreViewMode = mode;
+            const textView = document.getElementById('lore-text-view'); const graphView = document.getElementById('lore-graph-view');
+            const btnText = document.getElementById('btn-lore-text'); const btnGraph = document.getElementById('btn-lore-graph');
+            if(mode === 'text') {
+                textView.classList.remove('hidden'); graphView.classList.add('hidden'); cancelAnimationFrame(loreAnimationId);
+                btnText.className = "px-3 py-1 text-xs font-bold rounded-md bg-[var(--panel-bg)] text-accent shadow-sm transition-all";
+                btnGraph.className = "px-3 py-1 text-xs font-bold rounded-md text-sub hover:text-main transition-all";
+            } else {
+                textView.classList.add('hidden'); graphView.classList.remove('hidden');
+                btnGraph.className = "px-3 py-1 text-xs font-bold rounded-md bg-[var(--panel-bg)] text-accent shadow-sm transition-all";
+                btnText.className = "px-3 py-1 text-xs font-bold rounded-md text-sub hover:text-main transition-all";
+                setTimeout(() => { parseLoreToGraph(); }, 50); 
+            }
+        }
+
+// --- 修改后的刷新逻辑 ---
+
+// 1. 开关刷新弹窗
+function toggleRefreshModal() {
+    const modal = document.getElementById('refresh-modal');
+    if (modal) {
+        modal.classList.toggle('hidden');
+    }
+}
+
+// 2. 执行刷新 (绑定在弹窗的"确认"按钮上)
+function performRefresh() {
+    // 关闭弹窗
+    toggleRefreshModal();
+
+    // --- 以下是之前的刷新核心逻辑 ---
+    // 1. 备份配置
+    const keptKey = store.apiKey;
+    const keptUrl = store.baseUrl;
+    const keptTheme = store.theme;
+    const keptWordCount = store.defaultWordCount;
+    const keptEngine = store.engine;
+
+    // 2. 重置 Store
+    store = {
+        defaultWordCount: keptWordCount,
+        apiKey: keptKey,
+        baseUrl: keptUrl,
+        theme: keptTheme,
+        engine: keptEngine,
+        concept: '',
+        lore: '',
+        targetChapters: 100,
+        characters: [],
+        outline: [],
+        currentChapterId: null,
+        chapterTexts: {},
+        tags: []
+    };
+
+    // 3. 清空界面
+    ['novel-prompt', 'novel-lore', 'chapter-editor'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+    });
+
+    document.getElementById('section-outline').classList.add('hidden');
+    document.getElementById('section-loom').classList.add('hidden');
+    document.getElementById('chapter-selector').innerHTML = '<option value="">选择章节...</option>';
+    document.getElementById('current-word-count').innerText = "0 Words";
+
+    // 4. 重新渲染并保存
+    renderCharacters();
+    renderOutline();
+    renderSelectedTags();
+    initGraph();
+    saveData();
+    
+    showToast("已刷新：内容已重置 (Key 已保留)", "success");
+}
+
+// 监听键盘快捷键
+// 监听键盘快捷键
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && (e.key === 'z' || e.key === 'Z')) {
+        e.preventDefault(); 
+        console.log("触发快捷键: 打开刷新弹窗");
+        toggleRefreshModal(); // 这里改为调用弹窗函数
+    }
+});
+
+        function parseLoreToGraph() {
+            isGraphStable = false; // 唤醒
+            const text = document.getElementById('novel-lore').value; const lines = text.split('\n');
+            const canvas = document.getElementById('lore-canvas'); const parent = canvas.parentElement;
+            canvas.width = parent.clientWidth; canvas.height = parent.clientHeight;
+            loreOffset = { x: canvas.width / 2, y: canvas.height / 2 }; loreScale = 1;
+            loreNodes = []; let currentParentIndex = -1;
+            lines.forEach((line) => {
+                line = line.trim(); if(!line) return; if(line.includes('名称：描述') || line.includes('例如：')) return;
+                if((line.startsWith('【') && line.endsWith('】')) || line.startsWith('#')) {
+                    const label = line.replace(/[【】#]/g, '').trim();
+                    loreNodes.push({ label, type: 'category', x: (Math.random()-0.5)*50, y: (Math.random()-0.5)*50, vx:0, vy:0, radius: 40, color: '#c084fc', connections: [] });
+                    currentParentIndex = loreNodes.length - 1;
+                } else if (currentParentIndex !== -1) {
+                    let label = line.split(/[:：]/)[0].replace(/^[\s\d\.\-\*\>\•\+]+/g, '').trim();
+                    if(label.length > 0) {
+                        const parent = loreNodes[currentParentIndex];
+                        loreNodes.push({ label, type: 'item', x: parent.x+(Math.random()-0.5)*20, y: parent.y+(Math.random()-0.5)*20, vx:0, vy:0, radius: 25, color: '#818cf8', parentId: currentParentIndex });
+                        parent.connections.push(loreNodes.length - 1);
+                    }
+                }
+            });
+            if(loreNodes.length === 0) loreNodes.push({ label: "无数据", type: 'category', x: 0, y: 0, vx:0, vy:0, radius: 60, color: '#94a3b8', connections: [] });
+            animateLoreGraph();
+        }
+
+        function updateLorePhysics() {
+            const repulsion = 15000; const springLength = 180; const k = 0.04; const maxVel = 10;
+            let totalKineticEnergy = 0; 
+            for(let i=0; i<loreNodes.length; i++) {
+                let nodeA = loreNodes[i];
+                for(let j=i+1; j<loreNodes.length; j++) {
+                    let nodeB = loreNodes[j];
+                    let dx = nodeA.x - nodeB.x; let dy = nodeA.y - nodeB.y;
+                    let distSq = dx*dx + dy*dy || 1; let dist = Math.sqrt(distSq);
+                    if(dist < 800) { let f = repulsion / distSq; let fx = (dx / dist) * f; let fy = (dy / dist) * f; nodeA.vx += fx; nodeA.vy += fy; nodeB.vx -= fx; nodeB.vy -= fy; }
+                }
+                if(nodeA.parentId !== undefined) {
+                    let parent = loreNodes[nodeA.parentId];
+                    let dx = nodeA.x - parent.x; let dy = nodeA.y - parent.y; let dist = Math.sqrt(dx*dx + dy*dy) || 1;
+                    let f = (dist - springLength) * k; let fx = (dx / dist) * f; let fy = (dy / dist) * f; nodeA.vx -= fx; nodeA.vy -= fy; parent.vx += fx; parent.vy += fy;
+                }
+                nodeA.vx -= nodeA.x * 0.002; nodeA.vy -= nodeA.y * 0.002;
+            }
+            loreNodes.forEach(node => {
+                node.vx = Math.max(-maxVel, Math.min(maxVel, node.vx)); node.vy = Math.max(-maxVel, Math.min(maxVel, node.vy));
+                node.x += node.vx; node.y += node.vy; node.vx *= 0.9; node.vy *= 0.9;
+                totalKineticEnergy += Math.abs(node.vx) + Math.abs(node.vy);
+            });
+            if (totalKineticEnergy < 0.2) isGraphStable = true; 
+        }
+
+        function animateLoreGraph() {
+            if(loreViewMode !== 'graph') return;
+            if (!isGraphStable || isDraggingLore) {
+                updateLorePhysics();
+                drawLoreGraph();
+                loreAnimationId = requestAnimationFrame(animateLoreGraph);
+            } else { drawLoreGraph(); }
+        }
+
+        function drawLoreGraph() {
+            const canvas = document.getElementById('lore-canvas'); if(!canvas) return; const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.save(); ctx.translate(loreOffset.x, loreOffset.y); ctx.scale(loreScale, loreScale);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)'; ctx.lineWidth = 2 / loreScale;
+            loreNodes.forEach((node) => { if(node.parentId !== undefined) { const parent = loreNodes[node.parentId]; ctx.beginPath(); ctx.moveTo(parent.x, parent.y); ctx.lineTo(node.x, node.y); ctx.stroke(); } });
+            loreNodes.forEach(node => {
+                ctx.shadowBlur = 20; ctx.shadowColor = node.color; ctx.beginPath();
+                for (let i = 0; i < 6; i++) { ctx.lineTo(node.x + node.radius * Math.cos(i * Math.PI / 3), node.y + node.radius * Math.sin(i * Math.PI / 3)); }
+                ctx.closePath(); ctx.fillStyle = 'rgba(15, 23, 42, 0.9)'; ctx.fill(); ctx.strokeStyle = node.color; ctx.lineWidth = 2 / loreScale; ctx.stroke(); ctx.shadowBlur = 0;
+                ctx.fillStyle = '#fff'; const fontSize = (node.type === 'category' ? 14 : 10) / (loreScale > 1 ? 1 : loreScale * 0.8);
+                ctx.font = `bold ${Math.max(8, fontSize)}px Inter`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(node.label, node.x, node.y);
+            });
+            ctx.restore();
+        }
+
+        // --- Interaction Handlers ---
+        const loreCanvas = document.getElementById('lore-canvas');
+        function getPointerPos(e) { const rect = loreCanvas.getBoundingClientRect(); let cx = e.touches ? e.touches[0].clientX : e.clientX; let cy = e.touches ? e.touches[0].clientY : e.clientY; return { x: cx - rect.left, y: cy - rect.top }; }
+        function handleStart(e) { if(e.type === 'touchstart' && e.touches.length === 2) { lastTouchDist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); return; } isDraggingLore = true; isGraphStable = false; animateLoreGraph(); lastLoreMousePos = getPointerPos(e); loreCanvas.style.cursor = 'grabbing'; }
+        function handleMove(e) { if(e.target === loreCanvas && e.cancelable) e.preventDefault(); if(e.type === 'touchmove' && e.touches.length === 2) { const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY); if(lastTouchDist > 0) { const zoom = Math.exp((dist - lastTouchDist) * 0.01); loreScale = Math.min(Math.max(0.1, loreScale * zoom), 5); } lastTouchDist = dist; return; } if(isDraggingLore) { const pos = getPointerPos(e); loreOffset.x += pos.x - lastLoreMousePos.x; loreOffset.y += pos.y - lastLoreMousePos.y; lastLoreMousePos = pos; } }
+        function handleWheel(e) { e.preventDefault(); isGraphStable = false; animateLoreGraph(); const zoom = Math.exp((e.deltaY < 0 ? 1 : -1) * 0.1); const rect = loreCanvas.getBoundingClientRect(); const mx = e.clientX - rect.left; const my = e.clientY - rect.top; const wx = (mx - loreOffset.x) / loreScale; const wy = (my - loreOffset.y) / loreScale; loreScale = Math.min(Math.max(0.1, loreScale * zoom), 5); loreOffset.x = mx - wx * loreScale; loreOffset.y = my - wy * loreScale; }
+        if(loreCanvas) { loreCanvas.addEventListener('mousedown', handleStart); loreCanvas.addEventListener('touchstart', handleStart, {passive: false}); window.addEventListener('mouseup', () => { isDraggingLore = false; loreCanvas.style.cursor = 'grab'; }); window.addEventListener('touchend', () => isDraggingLore = false); loreCanvas.addEventListener('mousemove', handleMove); loreCanvas.addEventListener('touchmove', handleMove, {passive: false}); loreCanvas.addEventListener('wheel', handleWheel); loreCanvas.addEventListener('dblclick', () => { loreOffset = { x: loreCanvas.width / 2, y: loreCanvas.height / 2 }; loreScale = 1; isGraphStable = false; animateLoreGraph(); }); }
+
+        // --- Data Logic (IndexedDB Async) ---
+        function updateBaseUrl() { const input = document.getElementById('custom-base-url'); if(input) { store.baseUrl = input.value.trim() || 'https://api.deepseek.com/chat/completions'; saveData(); showToast("Base URL 已更新", "success"); } }
+        function updateDefaultWords() { const input = document.getElementById('setting-default-words'); if(input) { store.defaultWordCount = input.value.trim() || '2000-3000'; saveData(); showToast("默认字数已更新", "success"); } }
+        function exportData() { const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(store)); const a = document.createElement('a'); a.href = dataStr; a.download = "nebula_quill_backup_" + new Date().toISOString().slice(0,10) + ".json"; document.body.appendChild(a); a.click(); a.remove(); showToast("备份已下载", "success"); }
+        function importData(input) { const file = input.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = function(e) { try { const data = JSON.parse(e.target.result); if(data.characters && data.outline) { store = {...store, ...data}; saveData(); location.reload(); } else { showToast("文件格式不正确", "error"); } } catch(err) { showToast("导入失败: " + err.message, "error"); } }; reader.readAsText(file); }
+        function handleSelection(e) { const editor = document.getElementById('chapter-editor'); const toolbar = document.getElementById('ai-toolbar'); const start = editor.selectionStart; const end = editor.selectionEnd; if (start !== end) { currentSelectionRange = { start, end, text: editor.value.substring(start, end) }; const isMobile = window.innerWidth < 640; if(!isMobile) { if(e.type === 'mouseup' || e.type === 'keyup') { toolbar.style.left = `${Math.min(e.clientX - 50, window.innerWidth - 250)}px`; toolbar.style.top = `${Math.max(e.clientY - 60, 20)}px`; } } toolbar.classList.add('visible'); } else { toolbar.classList.remove('visible'); } }
+        
+        async function saveData() { 
+            if (!store) return;
+            store.apiKey = document.getElementById('api-key').value; 
+            store.concept = document.getElementById('novel-prompt').value; 
+            store.lore = document.getElementById('novel-lore').value; 
+            store.targetChapters = document.getElementById('target-total-chapters').value; 
+            try {
+                await idb.put('deepseek_novel_data_v2', store);
+                const s = document.getElementById('save-status'); 
+                if(s){ const json = JSON.stringify(store); const size = (new Blob([json]).size / 1024).toFixed(1); s.innerText = `● Saved DB (${size}KB) ` + new Date().toLocaleTimeString(); s.style.color = "#10b981"; }
+            } catch(e) { console.error(e); const s = document.getElementById('save-status'); if(s) { s.innerText = "⚠️ Save Error"; s.style.color = "#ef4444"; } }
+        }
+        
+        async function loadData() { 
+            try {
+                let data = await idb.get('deepseek_novel_data_v2');
+                if (!data) {
+                    const localRaw = localStorage.getItem('deepseek_novel_data_v2') || localStorage.getItem('deepseek_novel_data_v1');
+                    if (localRaw) { data = JSON.parse(localRaw); console.log("Migrating LS to IDB..."); await idb.put('deepseek_novel_data_v2', data); }
+                }
+                if(data){ 
+                    store = {...store, ...data}; 
+                    if(!store.tags) store.tags=[]; if(!store.baseUrl) store.baseUrl='https://api.deepseek.com/chat/completions'; 
+                    document.getElementById('api-key').value = store.apiKey||''; document.getElementById('novel-prompt').value = store.concept||''; document.getElementById('novel-lore').value = store.lore||''; document.getElementById('target-total-chapters').value = store.targetChapters||100; 
+                    if(store.characters.length) renderCharacters(); 
+                    if(store.outline.length){ renderOutline(); document.getElementById('section-outline').classList.remove('hidden'); if(store.currentChapterId){ activateLoom(); document.getElementById('chapter-selector').value = store.currentChapterId; loadChapterText(); } } 
+                    renderSelectedTags(); detectEngine(); 
+                    showToast("数据加载成功 (DB)", "success");
+                }
+            } catch(e) { console.error(e); showToast("Load Error: " + e.message, "error"); }
+        }
+
+        // --- AI Logic (Updated) ---
+        async function callAI(msgs, onChunk) {
+            let key = document.getElementById('api-key').value.trim().replace(/[\u4e00-\u9fa5]/g,''); if (!key) throw new Error("请输入 API Key");
+            const baseUrl = store.baseUrl || "https://api.deepseek.com/chat/completions";
+            let attempt = 0;
+            while(attempt <= 2) {
+                try {
+                    const r = await fetch(baseUrl, { method: "POST", headers: { "Content-Type": "application/json", "Authorization": `Bearer ${key}` }, body: JSON.stringify({ model: "deepseek-chat", messages: msgs, temperature: 1.3, max_tokens: 4000, stream: !!onChunk }) });
+                    if (!r.ok) throw new Error("API Error");
+                    if(onChunk) { 
+                        const reader = r.body.getReader(); const decoder = new TextDecoder("utf-8"); let result = ""; 
+                        while (true) { const { done, value } = await reader.read(); if (done) break; const chunk = decoder.decode(value, { stream: true }); const lines = chunk.split('\n'); for (const line of lines) { if (line.startsWith('data: ')) { const jsonStr = line.slice(6); if (jsonStr === '[DONE]') break; try { const json = JSON.parse(jsonStr); const content = json.choices[0].delta.content || ""; result += content; onChunk(content); } catch (e) {} } } } return result; 
+                    } else { const d = await r.json(); return d.choices[0].message.content; }
+                } catch(e) { attempt++; if(attempt > 2) throw new Error(`API Error: ${e.message}`); await new Promise(r => setTimeout(r, 1000 * attempt)); }
+            }
+        }
+
+        async function aiGenLore() { 
+            const p = document.getElementById('novel-prompt').value; if(!p) return showToast("请输入梗概", "info"); 
+            document.getElementById('lore-loading').classList.remove('hidden'); 
+            const currentTags = (store.tags && store.tags.length > 0) ? store.tags.join(', ') : "无特定风格";
+            try { 
+                const r = await callAI([
+                    { role: 'system', content: `你是一个网文世界观架构师。严禁出现与标签【${currentTags}】不符的元素。保持逻辑自洽。` },
+                    { role: 'user', content: `基于梗概生成世界观（等级、势力）。\n梗概：${p}\n格式：\n【大标题】\n名称：描述` }
+                ]); 
+                document.getElementById('novel-lore').value += "\n" + r; 
+                if(loreViewMode === 'graph') parseLoreToGraph(); 
+                debounceSave(); showToast("推演完成", "success"); 
+            } catch(e) { showToast(e.message, "error"); } finally { document.getElementById('lore-loading').classList.add('hidden'); } 
+        }
+
+        async function aiGenerateCharacter(btn) {
+            const p = document.getElementById('novel-prompt').value; if (!p) return showToast("请输入核心梗概", "error");
+            const originalText = btn.innerHTML; btn.innerHTML = "⏳"; btn.disabled = true;
+            try {
+                const styleTags = store.tags.length > 0 ? store.tags.join('、') : "无特定风格";
+                const existingChars = store.characters.map(c => `${c.name}(${c.role})`).join('、');
+                const charContext = existingChars ? `现有角色：${existingChars}` : "首个角色";
+                const res = await callAI([
+                    { role: "system", content: `网文人设策划。风格：【${styleTags}】。严禁不符背景的设定。JSON ONLY.` },
+                    { role: "user", content: `基于梗概"${p}"。${charContext}。构思1个新角色。\n格式: {"name": "", "role": "", "tags": [], "desc": ""}` }
+                ]);
+                let newChar = cleanJson(res); if (Array.isArray(newChar)) newChar = newChar[0];
+                if (!Array.isArray(newChar.tags)) newChar.tags = [];
+                store.characters.push(newChar); renderCharacters(); saveData(); initGraph(); showToast(`角色【${newChar.name}】已生成`, "success");
+            } catch (e) { showToast("失败: " + e.message, "error"); } finally { btn.innerHTML = originalText; btn.disabled = false; }
+        }
+
+        async function generateMoreOutline() { 
+            const c = store.outline.length; const t = parseInt(document.getElementById('target-total-chapters').value); if(c >= t) return showToast("已达目标","info"); 
+            const btn = document.getElementById('btn-add-outline'); const s = document.getElementById('outline-spinner'); btn.disabled = true; btn.querySelector('span').innerText = "推演中..."; s.classList.remove('hidden'); 
+            try { 
+                const recentPlot = c > 0 ? JSON.stringify(store.outline.slice(-5)) : "开始"; 
+                const charNames = store.characters.map(x => x.name).join('、');
+                const r = await callAI([
+                    { role: "system", content: `网文大纲策划。核心：${store.concept}。标签：${store.tags.join(',')}。严禁流水账。JSON Array: [{"title":"","desc":"【冲突】...【发展】...【悬念】..."}]` },
+                    { role: "user", content: `角色：${charNames}。接上文：${recentPlot}。生成${c+1}-${Math.min(c+10, t)}章大纲。` }
+                ]); 
+                cleanJson(r).forEach((x, i) => store.outline.push({ id: c + i + 1, title: x.title, desc: x.desc })); renderOutline(); saveData(); showToast(`成功延展`, "success"); 
+            } catch(e) { showToast(e.message, "error"); } finally { btn.disabled = false; btn.querySelector('span').innerText = "+ 延展剧情"; s.classList.add('hidden'); } 
+        }
+
+        async function generateChapterText(cont) { 
+            const id = store.currentChapterId; if(!id) return showToast("选章节","error"); 
+            const ch = store.outline.find(x => x.id == id); const ed = document.getElementById('chapter-editor'); const pnl = document.getElementById('loom-panel'); pnl.classList.add('generating-glow'); 
+            const spin = document.getElementById('loading-overlay'); if(spin) { spin.classList.remove('hidden'); spin.querySelector('p').innerText="AI 正在回溯剧情..."; } 
+            
+            const prevOutlines = store.outline.filter(x => x.id < id).slice(-15).map(x => `第${x.id}章:${x.desc}`).join(' -> ');
+            const storyStream = prevOutlines ? `【前情脉络】：${prevOutlines}` : "【前情】：开篇";
+            const charSummary = store.characters.map(x => `${x.name}[${x.role}]`).join('，');
+            const tags = store.tags || [];
+            let styleInstruction = "文笔流畅，Show Don't Tell。";
+            if(tags.includes("爽文")) styleInstruction += "节奏极快，注重情绪宣泄。"; else if(tags.includes("悬疑")) styleInstruction += "注重环境渲染，压抑感。";
+            const wordTarget = ch.targetWords || store.defaultWordCount || "2000-3000";
+
+            try { 
+                let msg = []; const shortLore = store.lore.length > 800 ? store.lore.substring(0, 800)+"..." : store.lore;
+                const sys = `网文大神。${styleInstruction} 字数${wordTarget}。\n【长期记忆】${storyStream}\n【世界】${shortLore}\n【角色】${charSummary}`;
+                if(cont) { 
+                    const ctx = ed.value.slice(-1500); 
+                    msg = [{role:"system",content:sys},{role:"user",content:`【上文】...${ctx}\n【本章大纲】${ch.desc}\n请续写:`}]; 
+                } else { 
+                    msg = [{role:"system",content:sys},{role:"user",content:`【标题】${ch.title}\n【大纲】${ch.desc}\n开始创作:`}]; 
+                } 
+                if(spin) spin.classList.add('hidden'); 
+                await callAI(msg, (c) => { ed.value += c; ed.scrollTop = ed.scrollHeight; updateWordCount(); }); 
+                store.chapterTexts[id] = ed.value; saveData(); renderOutline(); 
+            } catch(e) { showToast(e.message,"error"); } finally { if(pnl) pnl.classList.remove('generating-glow'); if(spin) spin.classList.add('hidden'); } 
+        }
+
+        // --- Other Helpers (Unchanged Logic, Condensed) ---
+        function cleanJson(text) { const m = text.match(/```json\s*([\s\S]*?)\s*```/) || text.match(/```\s*([\s\S]*?)\s*```/); if (m) { try { return JSON.parse(m[1]); } catch (e) {} } const s = text.indexOf('['), e = text.lastIndexOf(']'); if(s!==-1&&e!==-1&&e>s) try{return JSON.parse(text.substring(s,e+1))}catch(x){} const s2=text.indexOf('{'), e2=text.lastIndexOf('}'); if(s2!==-1&&e2!==-1&&e2>s2) try{return JSON.parse(text.substring(s2,e2+1))}catch(x){} throw new Error("JSON Parse Failed"); }
+        async function aiAssist(type) { if(!currentSelectionRange) return; document.getElementById('ai-toolbar').classList.remove('visible'); const prompt = type==='polish'?"润色，文笔优美":type==='expand'?"扩写，增加细节":type==='shorten'?"精简":type==='synonym'?"重写句子":"修改"; showToast("AI 施法中...", "info"); try { const res = await callAI([{role: "system", content: "文学编辑。直接返回修改后的文本。"}, {role: "user", content: `请${prompt}：\n"${currentSelectionRange.text}"`}]); document.getElementById('chapter-editor').setRangeText(res, currentSelectionRange.start, currentSelectionRange.end, 'select'); showToast("完成", "success"); updateWordCount(); saveData(); } catch(e) { showToast(e.message, "error"); } }
+        async function aiCritique() { const c=document.getElementById('chapter-editor').value; if(c.length<200) return showToast("字数太少","info"); showToast("毒舌编辑阅读中...","info"); const b=document.getElementById('critique-content'); b.innerHTML='<span class="animate-pulse">阅读中...</span>'; document.getElementById('critique-modal').classList.remove('hidden'); let full=""; try{ await callAI([{role:'user',content:`毒舌主编。犀利点评。格式：【评分】X/10\n【毒点】\n【建议】\n\n正文：${c.slice(-2000)}`}], (k)=>{full+=k; b.innerHTML=full.replace(/【(.*?)】/g,'<span class="critique-highlight">【$1】</span>');}); }catch(e){b.innerHTML="Error: "+e.message;} }
+        
+        function generateInitialAnalysis() { document.getElementById('btn-gen-idea').click(); } // Placeholder, logic integrated in gen functions
+        function toggleZenMode() { document.body.classList.toggle('zen-mode'); }
+        function toggleCritiqueModal() { document.getElementById('critique-modal').classList.toggle('hidden'); }
+        function copyCritique() { navigator.clipboard.writeText(document.getElementById('critique-content').innerText); showToast("复制成功"); }
+        function initGraph() { const canvas = document.getElementById('graph-canvas'); if(!canvas) return; const parent = canvas.parentElement; canvas.width = parent.clientWidth; canvas.height = parent.clientHeight; graphNodes = (store.characters.length?store.characters:[{name:"主角",role:"核心"}]).map((c,i)=>{const a=(i/store.characters.length)*Math.PI*2||0; return {name:c.name,x:canvas.width/2+Math.cos(a)*100,y:canvas.height/2+Math.sin(a)*100,color:i===0?'#f43f5e':'#818cf8'};}); drawGraph(); }
+        let graphNodes=[], graphOffset={x:0,y:0}, isDraggingGraph=false, lastMousePos={x:0,y:0};
+        function drawGraph() { const c=document.getElementById('graph-canvas'); if(!c)return; const ctx=c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); ctx.save(); ctx.translate(graphOffset.x,graphOffset.y); ctx.strokeStyle='rgba(255,255,255,0.1)'; graphNodes.forEach((n,i)=>{for(let j=i+1;j<graphNodes.length;j++){ctx.beginPath();ctx.moveTo(n.x,n.y);ctx.lineTo(graphNodes[j].x,graphNodes[j].y);ctx.stroke();}}); graphNodes.forEach(n=>{ctx.fillStyle=n.color;ctx.beginPath();ctx.arc(n.x,n.y,20,0,Math.PI*2);ctx.fill();ctx.fillStyle='#fff';ctx.fillText(n.name,n.x-10,n.y+5);}); ctx.restore(); }
+        const gc = document.getElementById('graph-canvas'); if(gc) { gc.addEventListener('mousedown',()=>{isDraggingGraph=true}); window.addEventListener('mouseup',()=>{isDraggingGraph=false}); gc.addEventListener('mousemove',e=>{if(isDraggingGraph){graphOffset.x+=e.movementX;graphOffset.y+=e.movementY;drawGraph();}}); }
+
+        function renderTagSelector() { const c = document.getElementById('tag-list-container'); if(c) { let h=''; for(const [k,v] of Object.entries(NOVEL_TAGS)) { h+=`<div class="mb-5"><h4 class="text-xs font-bold text-sub mb-3 opacity-80 border-b border-[var(--panel-border)] pb-1">${k}</h4><div class="flex flex-wrap gap-2">${v.map(t=>`<div onclick="toggleTag('${t}')" class="tag-selectable ${store.tags.includes(t)?'selected':''}">${t}</div>`).join('')}</div></div>`; } c.innerHTML=h; } }
+        function toggleTag(t) { if(store.tags.includes(t)) store.tags=store.tags.filter(x=>x!==t); else store.tags.push(t); renderTagSelector(); renderSelectedTags(); saveData(); }
+        function renderSelectedTags() { const c = document.getElementById('selected-tags-container'); if(c) c.innerHTML = store.tags.map(t=>`<span class="novel-tag">${t} <span onclick="toggleTag('${t}');event.stopPropagation()" class="tag-remove">×</span></span>`).join(''); }
+        function toggleTagSelector() { document.getElementById('tag-selector-modal').classList.toggle('hidden'); if(!document.getElementById('tag-selector-modal').classList.contains('hidden')) renderTagSelector(); }
+        function addCustomTag() { const i=document.getElementById('custom-tag-input'); const v=i.value.trim(); if(v&&!store.tags.includes(v)){ store.tags.push(v); i.value=''; renderTagSelector(); renderSelectedTags(); saveData(); } }
+        function updateClock() { document.getElementById('live-clock').innerText = new Date().toLocaleTimeString(); }
+        function debounceSave() { const s=document.getElementById('save-status'); if(s) { s.innerText="Saving..."; clearTimeout(saveTimeout); saveTimeout=setTimeout(saveData, 1000); } petHappy(); }
+        function toggleThemeMenu() { document.getElementById('theme-menu').classList.toggle('hidden'); }
+        function changeTheme(n) { document.documentElement.setAttribute('data-theme', n); store.theme=n; saveData(); document.getElementById('theme-menu').classList.add('hidden'); }
+        function switchTab(id) { ['tab-prompt','tab-lore','tab-graph'].forEach(t=>document.getElementById(t).classList.add('hidden')); ['btn-tab-prompt','btn-tab-lore','btn-tab-graph'].forEach(b=>document.getElementById(b).className="flex-1 px-2 md:px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-300 opacity-60 hover:opacity-100 hover:bg-[var(--panel-bg)] whitespace-nowrap"); document.getElementById(id).classList.remove('hidden'); document.getElementById('btn-'+id).className="flex-1 px-2 md:px-4 py-2 text-xs md:text-sm font-bold rounded-xl transition-all duration-300 shadow-md bg-[var(--panel-bg)] text-accent whitespace-nowrap"; if(id==='tab-graph') initGraph(); }
+        function toggleModal(id) { document.getElementById(id).classList.toggle('hidden'); }
+        function showToast(m, t='info') { Toastify({ text: m, duration: 3000, gravity: "top", position: "center", style: { background: t==='success'?"#10b981":"#f43f5e" }, className: "rounded-lg shadow-lg font-bold text-sm" }).showToast(); }
+        function clearAllData() { toggleResetModal(); }
+        function toggleResetModal() { document.getElementById('reset-modal').classList.toggle('hidden'); }
+        function performReset() { const k=store.apiKey; localStorage.clear(); indexedDB.deleteDatabase(DB_CONFIG.name); location.reload(); }
+        function downloadNovel() { if(!store.outline.length) return showToast("无内容", "error"); let c=`《${store.concept.substring(0,10)}》\n${store.concept}\n${store.lore}\n\n`; store.outline.forEach(ch=>c+=`${ch.title}\n${store.chapterTexts[ch.id]||''}\n\n`); const b=new Blob([c],{type:"text/plain"}); const u=URL.createObjectURL(b); const a=document.createElement("a"); a.href=u; a.download="小说.txt"; a.click(); }
+        function detectEngine() { const k=document.getElementById('api-key').value.trim(); const d=document.getElementById('engine-dot'); const n=document.getElementById('engine-name'); if(!d||!n) return; if(k.startsWith('sk-')){ store.engine='deepseek'; d.className="w-2 h-2 rounded-full bg-blue-500 shadow-[0_0_5px_rgba(59,130,246,0.8)]"; n.innerText="DeepSeek"; n.className="text-blue-300 font-bold"; } else { store.engine='none'; d.className="w-2 h-2 rounded-full bg-gray-500"; n.innerText="No Key"; n.className="opacity-50"; } debounceSave(); }
+        async function aiBrainstormTags() { const p=document.getElementById('novel-prompt').value; if(!p) return showToast("无梗概", "info"); showToast("分析中...", "info"); try { const r=await callAI([{role:'user', content:`推荐5-8个标签，基于：${p}。JSON Array Only.`}]); const t=cleanJson(r); if(Array.isArray(t)) { t.forEach(x=>{if(!store.tags.includes(x))store.tags.push(x)}); renderSelectedTags(); renderTagSelector(); saveData(); showToast(`添加标签`, "success"); } } catch(e) { showToast(e.message, "error"); } }
+        function renderCharacters() { const l = document.getElementById('character-list'); if (!l) return; l.innerHTML = store.characters.map((c, i) => `<div class="glass-panel p-3 rounded-xl relative group hover:bg-[var(--panel-bg)] border border-[var(--panel-border)] shadow-sm flex flex-col gap-2 transition-all hover:-translate-y-1 hover:shadow-md hover:border-indigo-500/30"><div class="flex justify-between items-start"><span class="font-bold text-accent text-sm truncate pr-2">${c.name}</span><span class="text-[10px] opacity-60 bg-black/20 px-1.5 py-0.5 rounded text-sub border border-[var(--panel-border)] whitespace-nowrap max-w-[45%] truncate">${c.role}</span></div><div class="text-[10px] text-sub line-clamp-3 leading-relaxed opacity-80 bg-black/5 p-1.5 rounded-lg min-h-[3.5em]">${c.desc || '暂无描述...'}</div><button onclick="store.characters.splice(${i},1);renderCharacters();saveData();initGraph()" class="absolute -top-2 -right-2 w-5 h-5 bg-red-500/80 hover:bg-red-500 rounded-full text-white flex items-center justify-center text-xs opacity-100 md:opacity-0 group-hover:opacity-100 transition shadow-md backdrop-blur-sm z-10">×</button></div>`).join(''); }
+        function renderOutline() { const c=document.getElementById('outline-container'); const e=document.getElementById('outline-empty-state'); const p=document.getElementById('chapter-progress-text'); const t=document.getElementById('target-total-chapters').value; p.innerText=`${store.outline.length}/${t}`; if(store.outline.length===0){c.innerHTML='';e.classList.remove('hidden');return;}else{e.classList.add('hidden');} c.innerHTML=store.outline.map((ch,i)=>{ const has=store.chapterTexts[ch.id]&&store.chapterTexts[ch.id].length>0; const b=has?`<span class="text-[10px] bg-emerald-500/20 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/30">✅ 已写</span>`:`<span class="text-[10px] bg-[var(--input-bg)] text-sub px-2 py-0.5 rounded-full border border-[var(--panel-border)] opacity-60">⏳ 待写</span>`; const sel=store.currentChapterId==ch.id?'card-active scale-[1.02]':''; return `<div class="glass-panel p-4 md:p-5 rounded-2xl cursor-pointer hover:bg-[var(--panel-bg)] transition-all group highlight-card relative overflow-hidden shadow-sm hover:shadow-md hover:-translate-y-1 ${sel}" onclick="selectChapter(${ch.id})"><div class="absolute -right-2 -top-5 text-[4rem] md:text-[5rem] font-bold opacity-[0.03] text-main pointer-events-none mono-font select-none">${String(i+1).padStart(2,'0')}</div><div class="relative z-10"><div class="flex justify-between items-start mb-3"><span class="text-xs font-bold opacity-50 tracking-wider text-sub">CH ${i+1}</span>${b}</div><h3 class="text-sm font-bold text-main truncate mb-2 group-hover:text-accent transition-colors leading-relaxed">${ch.title}</h3><p class="text-xs text-sub leading-relaxed line-clamp-3 opacity-80">${ch.desc}</p></div></div>`; }).join(''); const sel=document.getElementById('chapter-selector'); const val=sel.value; sel.innerHTML='<option value="">选择章节...</option>'+store.outline.map(ch=>`<option value="${ch.id}">${ch.title}</option>`).join(''); if(val) sel.value=val; }
+        function updateProgressUI() { document.getElementById('chapter-progress-text').innerText=`${store.outline.length}/${document.getElementById('target-total-chapters').value}`; }
+        function activateLoom() { document.getElementById('section-loom').classList.remove('hidden'); document.getElementById('section-loom').scrollIntoView({behavior:'smooth'}); }
+        function loadChapterText() { const id=document.getElementById('chapter-selector').value; store.currentChapterId=id; document.getElementById('chapter-editor').value=(id&&store.chapterTexts[id])?store.chapterTexts[id]:""; updateWordCount(); }
+        function updateWordCount() { document.getElementById('current-word-count').innerText=document.getElementById('chapter-editor').value.length+" Words"; }
+        function selectChapter(id) { if(!id) return; store.currentChapterId = id; activateLoom(); document.getElementById('chapter-selector').value = id; loadChapterText(); renderOutline(); const ch = store.outline.find(x => x.id == id); if(ch) { document.getElementById('active-outline-module').classList.remove('hidden'); document.getElementById('active-outline-title').value = ch.title; document.getElementById('active-outline-desc').value = ch.desc; document.getElementById('active-outline-words').value = ch.targetWords || store.defaultWordCount || "2000-3000"; } }
+        function updateActiveOutlineData() { const id = store.currentChapterId; if(!id) return; const chIndex = store.outline.findIndex(x => x.id == id); if(chIndex !== -1) { store.outline[chIndex].title = document.getElementById('active-outline-title').value; store.outline[chIndex].desc = document.getElementById('active-outline-desc').value; store.outline[chIndex].targetWords = document.getElementById('active-outline-words').value; saveData(); renderOutline(); } }
+        function addManualCharacter() { const n=document.getElementById('new-char-name').value; if(!n) return; store.characters.push({name:n, role:document.getElementById('new-char-role').value, tags:document.getElementById('new-char-tags').value.split(/[,，]/), desc:document.getElementById('new-char-desc').value}); renderCharacters(); saveData(); toggleModal('char-modal'); initGraph(); }
+        function insertLoreTemplate(type) { const t={'等级体系':'\n【力量等级】\n1. 凡境\n2. 灵境','地理环境':'\n【地图】\n东域\n西漠','势力组织':'\n【势力】\n天道宗\n血煞门'}; document.getElementById('novel-lore').value+=t[type]||''; if(loreViewMode==='graph') parseLoreToGraph(); debounceSave(); }
+        function checkAndAutoPopAnnouncements() { const r = JSON.parse(localStorage.getItem('read_announcements') || '[]'); if(!r.includes(999)) toggleAnnouncements(); }
+        function toggleAnnouncements() { const m=document.getElementById('announcement-modal'); const l=document.getElementById('announcement-list'); const dot=document.getElementById('notification-dot'); if(m.classList.contains('hidden')) { m.classList.remove('hidden'); dot.classList.add('hidden'); l.innerHTML = systemAnnouncements.map(a => { const r = JSON.parse(localStorage.getItem('read_announcements')||'[]').includes(a.id); let c=a.type==='important'?'announcement-important':'border border-[var(--panel-border)] bg-[var(--input-bg)]'; let b=a.type==='important'?`<span class="bg-amber-500 text-black px-2 rounded font-bold text-xs animate-pulse">必读</span>`:`<span class="bg-indigo-500 text-white px-2 rounded text-xs">更新</span>`; return `<div class="p-4 rounded-lg mb-3 ${c} ${r&&a.type!=='important'?'opacity-50':''}"><div class="flex justify-between mb-2"><div class="flex gap-2 items-center">${b} <span class="font-bold text-main">${a.title}</span></div><span class="text-xs text-sub">${a.date}</span></div><div class="text-sm text-sub leading-relaxed pl-1 opacity-90">${a.content}</div></div>`; }).join(''); } else m.classList.add('hidden'); }
+        function markAllAsRead() { const ids=systemAnnouncements.map(a=>a.id); localStorage.setItem('read_announcements', JSON.stringify(ids)); toggleAnnouncements(); }
+        function showDisclaimer(r) { document.getElementById('disclaimer-modal').classList.remove('hidden'); if(!r) document.getElementById('main-content').classList.add('blur-content'); }
+        function acceptDisclaimer() { localStorage.setItem('agreed_to_terms_v1', 'true'); document.getElementById('disclaimer-modal').classList.add('hidden'); document.getElementById('main-content').classList.remove('blur-content'); showToast("欢迎使用", "success"); setTimeout(checkAndAutoPopAnnouncements, 500); }
+        function toggleTutorial() { document.getElementById('tutorial-modal').classList.toggle('hidden'); }
+        let petTimer; function petInteract() { const pet = document.getElementById('pet-body'); const bubble = document.getElementById('pet-bubble'); pet.classList.add('pet-happy'); const msgs = ["加油呀！", "灵感+1", "DeepSeek 也很喜欢这章！"]; bubble.innerText = msgs[Math.floor(Math.random()*msgs.length)]; bubble.classList.add('show'); setTimeout(() => { pet.classList.remove('pet-happy'); bubble.classList.remove('show'); }, 2000); }
+        function petHappy() { const pet = document.getElementById('pet-body'); if(!pet.classList.contains('pet-happy')) { pet.classList.add('pet-happy'); setTimeout(() => pet.classList.remove('pet-happy'), 1000); } clearTimeout(petTimer); }
+        document.addEventListener('mousemove', (e) => { const eyes = document.querySelectorAll('.pet-eye'); eyes.forEach(eye => { const rect = eye.getBoundingClientRect(); const x = rect.left + rect.width / 2; const y = rect.top + rect.height / 2; const rad = Math.atan2(e.clientX - x, e.clientY - y); const rot = (rad * (180 / Math.PI) * -1) + 180; eye.style.transform = `rotate(${rot}deg)`; }); });
+        function togglePet() { const c = document.getElementById('pet-container'); c.style.display = c.style.display === 'none' ? 'block' : 'none'; }
+    </script>
+</body>
+</html>
