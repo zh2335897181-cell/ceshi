@@ -1,0 +1,114 @@
+/* stylelint-disable selector-type-no-unknown */
+/* stylelint-disable at-rule-no-unknown */
+@import url('weapp-tailwindcss');
+@config "../tailwind.config.js";
+
+/* 小程序页面容器高度设置，确保垂直居中生效 */
+page {
+  height: 100%;
+}
+
+/* 轻奢沙龙美学 - Design Tokens */
+:root,
+page {
+  /* 主配色 */
+  --champagne-gold: #c9a96e;
+  --obsidian-black: #1a1a1a;
+  --pearl-white: #faf9f6;
+  --ivory: #f8f6f3;
+  --warm-gray: #e8e0d4;
+  --light-beige: #f0ece4;
+  
+  /* 语义化颜色 */
+  --background: var(--pearl-white);
+  --foreground: var(--obsidian-black);
+  --card: var(--pearl-white);
+  --card-foreground: var(--obsidian-black);
+  --primary: var(--champagne-gold);
+  --primary-foreground: var(--obsidian-black);
+  --secondary: var(--light-beige);
+  --secondary-foreground: var(--obsidian-black);
+  --muted: var(--warm-gray);
+  --muted-foreground: #8b7355;
+  --border: var(--warm-gray);
+  --input: var(--warm-gray);
+  --ring: var(--champagne-gold);
+  --radius: 2px;
+}
+
+@theme inline {
+  --color-champagne-gold: var(--champagne-gold);
+  --color-obsidian-black: var(--obsidian-black);
+  --color-pearl-white: var(--pearl-white);
+  --color-ivory: var(--ivory);
+  --color-warm-gray: var(--warm-gray);
+  --color-light-beige: var(--light-beige);
+  
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 1px);
+  --radius-md: var(--radius);
+  --radius-lg: calc(var(--radius) + 2px);
+}
+
+/* 动画定义 */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes goldShimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s ease-out;
+}
+
+.gold-shimmer {
+  background: linear-gradient(
+    90deg,
+    var(--champagne-gold) 0%,
+    #e8d5a8 50%,
+    var(--champagne-gold) 100%
+  );
+  background-size: 200% auto;
+  animation: goldShimmer 3s linear infinite;
+}
